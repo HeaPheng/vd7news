@@ -64,32 +64,30 @@ if (!wpApiUrl) {
   throw new Error("NEXT_PUBLIC_WP_API_URL is not defined");
 }
 
-const WP_API_URL: string = wpApiUrl;
+const WP_API_URL: string = wpApiUrl.replace(/\/$/, "");
 
-const WP_SITE_URL: string =
+const WP_SITE_URL: string = (
   process.env.NEXT_PUBLIC_WORDPRESS_SITE_URL ||
   process.env.WORDPRESS_SITE_URL ||
-  WP_API_URL.replace(/\/wp-json\/wp\/v2\/?$/, "");
+  WP_API_URL.replace(/\/wp-json\/wp\/v2\/?$/, "")
+).replace(/\/$/, "");
 
 function buildWpApiUrl(endpoint: string): string {
-  const base = WP_API_URL.replace(/\/$/, "");
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${base}${path}`;
+  return `${WP_API_URL}${path}`;
 }
 
 function buildWpSiteUrl(path: string): string {
-  const base = WP_SITE_URL.replace(/\/$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${cleanPath}`;
+  return `${WP_SITE_URL}${cleanPath}`;
 }
 
 async function fetchWpJson<T>(
   endpoint: string,
-  init?: RequestInit
+  revalidate: number = 120
 ): Promise<T> {
   const res = await fetch(buildWpApiUrl(endpoint), {
-    cache: "no-store",
-    ...init,
+    next: { revalidate },
   });
 
   if (!res.ok) {
@@ -139,7 +137,7 @@ function mapPost(
 
 async function getLatestPosts(limit = 4): Promise<WPPost[]> {
   try {
-    return await fetchWpJson<WPPost[]>(`/posts?_embed&per_page=${limit}`);
+    return await fetchWpJson<WPPost[]>(`/posts?_embed&per_page=${limit}`, 120);
   } catch {
     return [];
   }
@@ -148,7 +146,8 @@ async function getLatestPosts(limit = 4): Promise<WPPost[]> {
 async function getCategoryBySlug(slug: string): Promise<Category | null> {
   try {
     const data = await fetchWpJson<Category[]>(
-      `/categories?slug=${encodeURIComponent(slug)}`
+      `/categories?slug=${encodeURIComponent(slug)}`,
+      600
     );
 
     return data[0] || null;
@@ -169,7 +168,8 @@ async function getPostsByCategory(
 
   try {
     const posts = await fetchWpJson<WPPost[]>(
-      `/posts?categories=${category.id}&_embed&per_page=${limit}`
+      `/posts?categories=${category.id}&_embed&per_page=${limit}`,
+      120
     );
 
     return { category, posts };
@@ -182,7 +182,9 @@ async function getHomeSliderAds(): Promise<AdItem[]> {
   try {
     const res = await fetch(
       buildWpSiteUrl("/wp-json/vd7/v1/ads?placement=article_slider"),
-      { cache: "no-store" }
+      {
+        next: { revalidate: 120 },
+      }
     );
 
     if (!res.ok) return [];

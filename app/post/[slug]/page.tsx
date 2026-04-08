@@ -229,7 +229,14 @@ function MessengerAppIcon() {
 export default async function PostDetailPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const post: WPPost | null = await getPostBySlug(slug);
+  const [post, currentUrl, realEstateRaw, newestRaw, internationalRaw] =
+    await Promise.all([
+      getPostBySlug(slug),
+      getCurrentPostUrl(slug),
+      getPostsByCategorySlug("real-estate", 6),
+      getLatestPosts(10),
+      getPostsByCategorySlug("international-news", 10),
+    ]);
 
   if (!post) {
     notFound();
@@ -243,23 +250,17 @@ export default async function PostDetailPage({ params }: PageProps) {
     (term) => term.slug === "real-estate"
   );
 
-  const realEstatePosts: WPPost[] = (
-    await getPostsByCategorySlug("real-estate", 6)
-  )
+  const realEstatePosts: WPPost[] = realEstateRaw
     .filter((item: WPPost) => item.id !== post.id)
     .slice(0, 3);
 
-  const newestPosts: WPPost[] = (await getLatestPosts(10))
+  const newestPosts: WPPost[] = newestRaw
     .filter((item: WPPost) => item.id !== post.id)
     .slice(0, 4);
 
-  const internationalNewsPosts: WPPost[] = (
-    await getPostsByCategorySlug("international-news", 10)
-  )
+  const internationalNewsPosts: WPPost[] = internationalRaw
     .filter((item: WPPost) => item.id !== post.id)
     .slice(0, 4);
-
-  const currentUrl = await getCurrentPostUrl(post.slug);
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white">
@@ -314,7 +315,7 @@ export default async function PostDetailPage({ params }: PageProps) {
                         ទំនាក់ទំនងទិញលក់
                       </p>
 
-                      <div className="flex items-center justify-center gap-3">
+                      <div className="relative z-20 flex items-center justify-center gap-3">
                         <ContactIconButton
                           href="https://t.me/Insarun"
                           label="Telegram"
@@ -335,7 +336,7 @@ export default async function PostDetailPage({ params }: PageProps) {
                       href="https://mlmupc.gov.kh/electronic-cadastral-services/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center justify-between gap-3 rounded-2xl border border-blue-500/20 bg-[#0f1b33] px-4 py-4 transition-all duration-200 hover:border-blue-400/40 hover:bg-[#13203a] active:scale-[0.985] active:border-blue-400/40 active:bg-[#13203a] sm:gap-4 sm:px-5"
+                      className="relative z-10 group flex items-center justify-between gap-3 rounded-2xl border border-blue-500/20 bg-[#0f1b33] px-4 py-4 transition-all duration-200 hover:border-blue-400/40 hover:bg-[#13203a] active:scale-[0.985] active:border-blue-400/40 active:bg-[#13203a] sm:gap-4 sm:px-5"
                     >
                       <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-md transition-transform duration-200 group-active:scale-95 sm:h-14 sm:w-14">

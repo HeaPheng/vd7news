@@ -110,7 +110,7 @@ export default function NewsCard({
     setPressed(false);
   };
 
-  const cardBaseClass = `group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 ${
+  const cardBaseClass = `group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full ${
     pressed
       ? "scale-[0.975] border-red-500/40 bg-white/[0.08] ring-2 ring-red-500/20"
       : "scale-100 hover:border-red-500/40"
@@ -151,7 +151,7 @@ export default function NewsCard({
   if (horizontal) {
     return (
       <article
-        className={`${cardBaseClass} rounded-2xl`}
+        className={`${cardBaseClass} h-[420px] rounded-2xl md:h-[260px]`}
         onPointerDown={handlePressStart}
         onPointerUp={handlePressEnd}
         onPointerLeave={handlePressCancel}
@@ -189,10 +189,12 @@ export default function NewsCard({
             {renderMeta(date, author, true)}
 
             {excerpt && (
-              <p className="mb-3 mt-3 line-clamp-2 text-sm leading-6 text-gray-400">
+              <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-400">
                 {excerpt}
               </p>
             )}
+
+            <div className="mt-auto" />
           </div>
         </div>
       </article>
@@ -202,7 +204,7 @@ export default function NewsCard({
   if (compact) {
     return (
       <article
-        className={`${cardBaseClass} rounded-2xl`}
+        className={`${cardBaseClass} flex h-[360px] flex-col rounded-2xl`}
         onPointerDown={handlePressStart}
         onPointerUp={handlePressEnd}
         onPointerLeave={handlePressCancel}
@@ -211,7 +213,7 @@ export default function NewsCard({
       >
         <Link
           href={`/post/${slug}`}
-          className="block"
+          className="block shrink-0"
           style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
         >
           {image && (
@@ -225,7 +227,7 @@ export default function NewsCard({
           )}
         </Link>
 
-        <div className="p-4">
+        <div className="flex flex-1 flex-col p-4">
           {categoryName && <div className="mb-2">{badgeLink}</div>}
 
           <Link
@@ -241,10 +243,12 @@ export default function NewsCard({
           {renderMeta(date, author, true)}
 
           {excerpt && (
-            <p className="mb-3 mt-3 line-clamp-2 text-sm leading-6 text-gray-400">
+            <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-400">
               {excerpt}
             </p>
           )}
+
+          <div className="mt-auto" />
         </div>
       </article>
     );
@@ -252,7 +256,7 @@ export default function NewsCard({
 
   return (
     <article
-      className={`${cardBaseClass} rounded-3xl`}
+      className={`${cardBaseClass} flex h-[400px] flex-col rounded-3xl sm:h-[420px] lg:h-[460px]`}
       onPointerDown={handlePressStart}
       onPointerUp={handlePressEnd}
       onPointerLeave={handlePressCancel}
@@ -261,7 +265,7 @@ export default function NewsCard({
     >
       <Link
         href={`/post/${slug}`}
-        className="block"
+        className="block shrink-0"
         style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
       >
         {image && (
@@ -275,7 +279,7 @@ export default function NewsCard({
         )}
       </Link>
 
-      <div className="p-4 sm:p-5">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         {categoryName && <div className="mb-3">{badgeLink}</div>}
 
         <Link
@@ -297,6 +301,8 @@ export default function NewsCard({
             {excerpt}
           </p>
         )}
+
+        <div className="mt-auto" />
       </div>
     </article>
   );

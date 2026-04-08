@@ -23,12 +23,11 @@ if (!wpSiteUrl) {
   );
 }
 
-const WP_SITE_URL: string = wpSiteUrl;
+const WP_SITE_URL: string = wpSiteUrl.replace(/\/$/, "");
 
 function buildWpSiteUrl(path: string): string {
-  const base = WP_SITE_URL.replace(/\/$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${cleanPath}`;
+  return `${WP_SITE_URL}${cleanPath}`;
 }
 
 async function getAdsByPlacement(
@@ -38,7 +37,7 @@ async function getAdsByPlacement(
     const response = await fetch(
       buildWpSiteUrl(`/wp-json/vd7/v1/ads?placement=${placement}`),
       {
-        cache: "no-store",
+        next: { revalidate: 120 },
       }
     );
 

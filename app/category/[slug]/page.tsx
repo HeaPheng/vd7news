@@ -49,17 +49,19 @@ if (!wpApiUrl) {
   throw new Error("NEXT_PUBLIC_WP_API_URL is not defined");
 }
 
-const WP_API_URL: string = wpApiUrl;
+const WP_API_URL: string = wpApiUrl.replace(/\/$/, "");
 
 function buildWpApiUrl(endpoint: string): string {
-  const base = WP_API_URL.replace(/\/$/, "");
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${base}${path}`;
+  return `${WP_API_URL}${path}`;
 }
 
-async function fetchWpJson<T>(endpoint: string): Promise<T> {
+async function fetchWpJson<T>(
+  endpoint: string,
+  revalidate: number = 300
+): Promise<T> {
   const res = await fetch(buildWpApiUrl(endpoint), {
-    cache: "no-store",
+    next: { revalidate },
   });
 
   if (!res.ok) {
@@ -74,7 +76,8 @@ async function fetchWpJson<T>(endpoint: string): Promise<T> {
 async function getCategoryBySlug(slug: string): Promise<Category | null> {
   try {
     const data = await fetchWpJson<Category[]>(
-      `/categories?slug=${encodeURIComponent(slug)}`
+      `/categories?slug=${encodeURIComponent(slug)}`,
+      600
     );
 
     return data[0] || null;
