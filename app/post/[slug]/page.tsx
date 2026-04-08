@@ -85,13 +85,12 @@ async function PostContent({ slug }: { slug: string }) {
             <article className="overflow-hidden rounded-[28px] border border-white/10 bg-[#10182b] shadow-2xl">
               {/* Hero Image */}
               <div className="relative h-[260px] sm:h-[340px] lg:h-[430px]">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={featuredImage}
                   alt={post.title.rendered}
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1180px"
+                  fetchPriority="high"
+                  className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#10182b] via-[#10182b]/35 to-transparent" />
               </div>
