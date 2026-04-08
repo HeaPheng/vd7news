@@ -1,16 +1,13 @@
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 import Link from "next/link";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import ShareButtons from "@/src/components/post/ShareButtons";
 import ScrollButtons from "@/src/components/post/ScrollButtons";
 import ArticleContentWithLightbox from "@/src/components/post/ArticleContentWithLightbox";
 import ArticleTopAds from "@/src/components/post/ArticleTopAds";
-import {
-  getPostBySlug,
-  getPostsByCategorySlug,
-  getLatestPosts,
-} from "@/lib/wordpress";
+import PostRelatedSectionsLazy from "@/src/components/post/PostRelatedSectionsLazy";
+import { getPostBySlug } from "@/lib/wordpress";
 
 type PageProps = {
   params: Promise<{
@@ -44,6 +41,14 @@ type WPPost = {
   };
 };
 
+function safeDecodeSlug(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function getRequiredSiteUrl() {
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "";
@@ -55,6 +60,10 @@ function getRequiredSiteUrl() {
   }
 
   return siteUrl.replace(/\/$/, "");
+}
+
+function getCurrentPostUrl(slug: string) {
+  return `${getRequiredSiteUrl()}/post/${slug}`;
 }
 
 function getPostImage(post: WPPost) {
@@ -104,69 +113,6 @@ function getRelativeTime(date: string) {
   return `${years} ឆ្នាំមុន`;
 }
 
-function renderTags(post: WPPost, limit: number = 2) {
-  const terms = getPostTerms(post).slice(0, limit);
-
-  return (
-    <div className="mb-2 flex flex-wrap gap-2">
-      {terms.map((term) => (
-        <span
-          key={`${post.id}-${term.id}`}
-          className="rounded-full bg-red-600/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white"
-        >
-          {term.name}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function PostCard({ post }: { post: WPPost }) {
-  return (
-    <Link
-      href={`/post/${post.slug}`}
-      className="group overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
-    >
-      <img
-        src={getPostImage(post)}
-        alt={post.title.rendered}
-        className="h-28 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02] group-active:scale-[0.99] sm:h-36 lg:h-48"
-      />
-
-      <div className="p-3 lg:p-4">
-        {renderTags(post, 2)}
-
-        <div className="mb-2 text-xs text-white/50">
-          {getRelativeTime(post.date)} — {formatDate(post.date)}
-        </div>
-
-        <h3
-          className="line-clamp-3 text-sm font-semibold text-white/90 transition-colors duration-200 group-hover:text-red-400 group-active:text-red-400 lg:text-base"
-          dangerouslySetInnerHTML={{
-            __html: post.title.rendered,
-          }}
-        />
-      </div>
-    </Link>
-  );
-}
-
-async function getCurrentPostUrl(slug: string) {
-  const headerStore = await headers();
-
-  const forwardedProto = headerStore.get("x-forwarded-proto");
-  const forwardedHost = headerStore.get("x-forwarded-host");
-  const host = forwardedHost || headerStore.get("host");
-
-  if (host) {
-    const protocol =
-      forwardedProto || (host.includes("localhost") ? "http" : "https");
-    return `${protocol}://${host}/post/${slug}`;
-  }
-
-  return `${getRequiredSiteUrl()}/post/${slug}`;
-}
-
 function ContactIconButton({
   href,
   label,
@@ -174,7 +120,7 @@ function ContactIconButton({
 }: {
   href: string;
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <a
@@ -228,20 +174,15 @@ function MessengerAppIcon() {
 
 export default async function PostDetailPage({ params }: PageProps) {
   const { slug } = await params;
+  const normalizedSlug = safeDecodeSlug(slug);
 
-  const [post, currentUrl, realEstateRaw, newestRaw, internationalRaw] =
-    await Promise.all([
-      getPostBySlug(slug),
-      getCurrentPostUrl(slug),
-      getPostsByCategorySlug("real-estate", 6),
-      getLatestPosts(10),
-      getPostsByCategorySlug("international-news", 10),
-    ]);
+  const post = (await getPostBySlug(normalizedSlug)) as WPPost | null;
 
   if (!post) {
     notFound();
   }
 
+  const currentUrl = getCurrentPostUrl(post.slug);
   const featuredImage = getPostImage(post);
   const category = getPrimaryCategory(post);
   const postTerms = getPostTerms(post);
@@ -249,18 +190,6 @@ export default async function PostDetailPage({ params }: PageProps) {
   const isRealEstatePost = postTerms.some(
     (term) => term.slug === "real-estate"
   );
-
-  const realEstatePosts: WPPost[] = realEstateRaw
-    .filter((item: WPPost) => item.id !== post.id)
-    .slice(0, 3);
-
-  const newestPosts: WPPost[] = newestRaw
-    .filter((item: WPPost) => item.id !== post.id)
-    .slice(0, 4);
-
-  const internationalNewsPosts: WPPost[] = internationalRaw
-    .filter((item: WPPost) => item.id !== post.id)
-    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white">
@@ -369,120 +298,13 @@ export default async function PostDetailPage({ params }: PageProps) {
               </div>
             </article>
 
-            <section className="mt-10 space-y-10">
-              <div className="xl:hidden">
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white">អចលនទ្រព្យ</h2>
-
-                  <Link
-                    href="/category/real-estate"
-                    className="text-sm font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
-                  >
-                    See more
-                  </Link>
-                </div>
-
-                <div className="space-y-4">
-                  {realEstatePosts.map((item) => (
-                    <Link
-                      key={item.id}
-                      href={`/post/${item.slug}`}
-                      className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
-                    >
-                      <img
-                        src={getPostImage(item)}
-                        alt={item.title.rendered}
-                        className="h-44 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02] group-active:scale-[0.99] sm:h-52"
-                      />
-                      <div className="p-4">
-                        {renderTags(item, 2)}
-
-                        <h4
-                          className="line-clamp-2 text-base font-semibold text-white/90 transition-colors duration-200 group-hover:text-red-400 group-active:text-red-400"
-                          dangerouslySetInnerHTML={{
-                            __html: item.title.rendered,
-                          }}
-                        />
-                        <p className="mt-2 text-xs text-white/50">
-                          {getRelativeTime(item.date)} — {formatDate(item.date)}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white">ព័ត៌មានក្តៅៗ</h2>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-                  {newestPosts.map((item) => (
-                    <PostCard key={item.id} post={item} />
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white">
-                    ព័ត៌មានអន្តរជាតិ
-                  </h2>
-
-                  <Link
-                    href="/category/international-news"
-                    className="text-sm font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
-                  >
-                    ច្រើនទៀត
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-                  {internationalNewsPosts.map((item) => (
-                    <PostCard key={item.id} post={item} />
-                  ))}
-                </div>
-              </div>
-            </section>
+            <PostRelatedSectionsLazy
+              key={normalizedSlug}
+              slug={normalizedSlug}
+            />
           </main>
 
-          <aside className="hidden xl:block">
-            <div className="sticky top-24 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-              <div className="mb-4 flex items-center justify-between">
-                <h1 className="font-semibold uppercase tracking-wide text-red-400">
-                  អចលនទ្រព្យ
-                </h1>
-              </div>
-
-              <div className="space-y-4">
-                {realEstatePosts.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/post/${item.slug}`}
-                    className="group block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
-                  >
-                    <img
-                      src={getPostImage(item)}
-                      alt={item.title.rendered}
-                      className="h-36 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02] group-active:scale-[0.99]"
-                    />
-                    <div className="p-3">
-                      {renderTags(item, 2)}
-
-                      <h4
-                        className="line-clamp-2 text-sm font-semibold text-white/90 transition-colors duration-200 group-hover:text-red-400 group-active:text-red-400"
-                        dangerouslySetInnerHTML={{ __html: item.title.rendered }}
-                      />
-                      <p className="mt-2 text-xs text-white/50">
-                        {getRelativeTime(item.date)} — {formatDate(item.date)}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </aside>
+          <aside className="hidden xl:block" />
         </div>
       </div>
 
