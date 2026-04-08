@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 type WPTerm = {
@@ -174,13 +174,6 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
           <h2 className="font-semibold uppercase tracking-wide text-red-400">
             អចលនទ្រព្យ
           </h2>
-
-          <Link
-            href="/category/real-estate"
-            className="text-xs font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
-          >
-            ច្រើនទៀត
-          </Link>
         </div>
 
         <div className="space-y-4">
@@ -214,52 +207,16 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
   );
 }
 
-function LoadingBlock() {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/60">
-      កំពុងផ្ទុកព័ត៌មានបន្ថែម...
-    </div>
-  );
-}
-
 export default function PostRelatedSectionsLazy({
   slug,
 }: {
   slug: string;
 }) {
-  const triggerRef = useRef<HTMLDivElement | null>(null);
-  const [shouldLoad, setShouldLoad] = useState(false);
   const [data, setData] = useState<RelatedResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const node = triggerRef.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry?.isIntersecting) {
-          setShouldLoad(true);
-          observer.disconnect();
-        }
-      },
-      {
-        root: null,
-        rootMargin: "600px 0px 200px 0px",
-        threshold: 0.01,
-      }
-    );
-
-    observer.observe(node);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!shouldLoad || data || isLoading) return;
-
     let isMounted = true;
 
     async function loadData() {
@@ -278,6 +235,8 @@ export default function PostRelatedSectionsLazy({
         }
 
         const json = (await res.json()) as RelatedResponse;
+
+        console.log("Related content JSON:", json);
 
         if (isMounted) {
           setData(json);
@@ -299,68 +258,68 @@ export default function PostRelatedSectionsLazy({
     return () => {
       isMounted = false;
     };
-  }, [shouldLoad, data, isLoading, slug]);
+  }, [slug]);
+
+  if (isLoading) {
+    return (
+      <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/60">
+        កំពុងផ្ទុកព័ត៌មានបន្ថែម...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-10 rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-300">
+        {error}
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="mt-10 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-5 text-sm text-yellow-200">
+        មិនមានទិន្នន័យត្រូវបង្ហាញ
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div ref={triggerRef} className="mt-10 min-h-[80px]">
-        {!shouldLoad && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-white/50">
-            រមូរចុះក្រោម ដើម្បីផ្ទុកព័ត៌មានបន្ថែម
-          </div>
-        )}
+    <div className="mt-10 space-y-10">
+      <MobileRealEstateList posts={data.realEstatePosts || []} />
 
-        {shouldLoad && isLoading && <LoadingBlock />}
+      <div>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">ព័ត៌មានក្តៅៗ</h2>
+        </div>
 
-        {shouldLoad && error && (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-300">
-            {error}
-          </div>
-        )}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+          {(data.newestPosts || []).map((item) => (
+            <PostCard key={item.id} post={item} />
+          ))}
+        </div>
       </div>
 
-      {data && (
-        <div className="mt-10 grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-          <div className="space-y-10">
-            <MobileRealEstateList posts={data.realEstatePosts || []} />
+      <div>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">ព័ត៌មានអន្តរជាតិ</h2>
 
-            <div>
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">ព័ត៌មានក្តៅៗ</h2>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-                {(data.newestPosts || []).map((item) => (
-                  <PostCard key={item.id} post={item} />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">
-                  ព័ត៌មានអន្តរជាតិ
-                </h2>
-
-                <Link
-                  href="/category/international-news"
-                  className="text-sm font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
-                >
-                  ច្រើនទៀត
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-                {(data.internationalNewsPosts || []).map((item) => (
-                  <PostCard key={item.id} post={item} />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <DesktopRealEstateSidebar posts={data.realEstatePosts || []} />
+          <Link
+            href="/category/international-news"
+            className="text-sm font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
+          >
+            ច្រើនទៀត
+          </Link>
         </div>
-      )}
-    </>
+
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+          {(data.internationalNewsPosts || []).map((item) => (
+            <PostCard key={item.id} post={item} />
+          ))}
+        </div>
+      </div>
+
+      <DesktopRealEstateSidebar posts={data.realEstatePosts || []} />
+    </div>
   );
 }
