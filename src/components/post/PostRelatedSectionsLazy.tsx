@@ -93,7 +93,7 @@ function renderTags(post: WPPost, limit: number = 2) {
 function PostCard({ post }: { post: WPPost }) {
   return (
     <Link
-      href={`/post/${post.slug}`}
+      href={`/post/${post.id}`}
       className="group overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
     >
       <img
@@ -138,7 +138,7 @@ function MobileRealEstateList({ posts }: { posts: WPPost[] }) {
         {posts.map((item) => (
           <Link
             key={item.id}
-            href={`/post/${item.slug}`}
+            href={`/post/${item.id}`}
             className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
           >
             <img
@@ -180,7 +180,7 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
           {posts.map((item) => (
             <Link
               key={item.id}
-              href={`/post/${item.slug}`}
+              href={`/post/${item.id}`}
               className="group block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
             >
               <img

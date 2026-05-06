@@ -83,6 +83,21 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   return data[0] ?? null;
 }
 
+export async function getPostById(id: string | number): Promise<WPPost | null> {
+  try {
+    const data = await fetchFromWP<WPPost>(
+      `/posts/${id}?_embed`,
+      {
+        revalidate: 120,
+        tags: [`post-${id}`],
+      }
+    );
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getPostsByCategorySlug(
   categorySlug: string,
   perPage = 4

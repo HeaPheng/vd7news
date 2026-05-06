@@ -8,21 +8,21 @@ import ScrollButtons from "@/src/components/post/ScrollButtons";
 import ArticleContentWithLightbox from "@/src/components/post/ArticleContentWithLightbox";
 import ArticleTopAds from "@/src/components/post/ArticleTopAds";
 import PostRelatedSectionsLazy from "@/src/components/post/PostRelatedSectionsLazy";
-import { getPostBySlug } from "@/lib/wordpress";
+import { getPostBySlug, getPostById } from "@/lib/wordpress";
 import type { WPPost } from "@/lib/wordpress";
 
 // ─── Page Entry ───────────────────────────────────────────────────────────────
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export default async function PostDetailPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { id } = await params;
 
   return (
     <Suspense fallback={<PostSkeleton />}>
-      <PostContent slug={slug} />
+      <PostContent id={id} />
     </Suspense>
   );
 }
@@ -61,13 +61,12 @@ function PostSkeleton() {
 
 // ─── Main Content ─────────────────────────────────────────────────────────────
 
-async function PostContent({ slug }: { slug: string }) {
-  const normalizedSlug = safeDecodeSlug(slug);
-  const post = (await getPostBySlug(normalizedSlug)) as WPPost | null;
+async function PostContent({ id }: { id: string }) {
+  const post = (await getPostById(id)) as WPPost | null;
 
   if (!post) notFound();
 
-  const currentUrl = getCurrentPostUrl(post.slug);
+  const currentUrl = getCurrentPostUrl(post.id.toString());
   const featuredImage = getPostImage(post);
   const category = getPrimaryCategory(post);
   const postTerms = getPostTerms(post);
@@ -174,7 +173,7 @@ async function PostContent({ slug }: { slug: string }) {
             </article>
 
             <Suspense fallback={<div className="mt-8 h-40 animate-pulse rounded-2xl bg-white/5" />}>
-              <PostRelatedSectionsLazy key={normalizedSlug} slug={normalizedSlug} />
+              <PostRelatedSectionsLazy key={post.id} slug={post.slug} />
             </Suspense>
           </main>
 
@@ -203,8 +202,8 @@ function getRequiredSiteUrl() {
   return siteUrl.replace(/\/$/, "");
 }
 
-function getCurrentPostUrl(slug: string) {
-  return `${getRequiredSiteUrl()}/post/${slug}`;
+function getCurrentPostUrl(id: string) {
+  return `${getRequiredSiteUrl()}/post/${id}`;
 }
 
 function getPostImage(post: WPPost) {

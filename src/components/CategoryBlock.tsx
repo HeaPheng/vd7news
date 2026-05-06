@@ -31,7 +31,7 @@ export default function CategoryBlock({ title, posts }: CategoryBlockProps) {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <NewsCard
-          slug={featured.slug}
+          id={featured.id}
           title={featured.title}
           image={featured.image}
           excerpt={featured.excerpt}
@@ -46,7 +46,7 @@ export default function CategoryBlock({ title, posts }: CategoryBlockProps) {
           {rest.map((post) => (
             <NewsCard
               key={post.id}
-              slug={post.slug}
+              id={post.id}
               title={post.title}
               image={post.image}
               excerpt={post.excerpt}
