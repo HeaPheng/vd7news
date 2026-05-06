@@ -220,7 +220,7 @@ export default function CategoryPostGrid({
               }`}
             >
               <NewsCard
-                id={post.id}
+                slug={post.slug}
                 title={post.title.rendered}
                 image={image}
                 excerpt={stripHtml(post.excerpt?.rendered || "")}

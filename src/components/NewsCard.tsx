@@ -5,7 +5,7 @@ import { FiClock } from "react-icons/fi";
 import { useRef, useState } from "react";
 
 type NewsCardProps = {
-  id: string | number;
+  slug: string;
   title: string;
   image?: string;
   excerpt?: string;
@@ -72,7 +72,7 @@ function renderMeta(date?: string, author?: string, small = false) {
 }
 
 export default function NewsCard({
-  id,
+  slug,
   title,
   image,
   excerpt,
@@ -161,7 +161,7 @@ export default function NewsCard({
         <div className="flex h-full flex-col md:flex-row">
           {image && (
             <Link
-              href={`/post/${id}`}
+              href={`/post/${slug}`}
               className="block shrink-0 md:w-40 xl:w-44"
               style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
             >
@@ -177,7 +177,7 @@ export default function NewsCard({
             {categoryName && <div className="mb-2">{badgeLink}</div>}
 
             <Link
-              href={`/post/${id}`}
+              href={`/post/${slug}`}
               className="block"
               style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
             >
@@ -212,7 +212,7 @@ export default function NewsCard({
         style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
       >
         <Link
-          href={`/post/${id}`}
+          href={`/post/${slug}`}
           className="block shrink-0"
           style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
         >
@@ -231,7 +231,7 @@ export default function NewsCard({
           {categoryName && <div className="mb-2">{badgeLink}</div>}
 
           <Link
-            href={`/post/${id}`}
+            href={`/post/${slug}`}
             className="block"
             style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
           >
@@ -264,7 +264,7 @@ export default function NewsCard({
       style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
     >
       <Link
-        href={`/post/${id}`}
+        href={`/post/${slug}`}
         className="block shrink-0"
         style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
       >
@@ -283,7 +283,7 @@ export default function NewsCard({
         {categoryName && <div className="mb-3">{badgeLink}</div>}
 
         <Link
-          href={`/post/${id}`}
+          href={`/post/${slug}`}
           className="block"
           style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
         >

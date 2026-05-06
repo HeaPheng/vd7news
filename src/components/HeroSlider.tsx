@@ -137,7 +137,7 @@ export default function HeroSlider({ posts }: HeroSliderProps) {
                   </div>
 
                   <Link
-                    href={`/post/${post.id}`}
+                    href={`/post/${post.slug}`}
                     className="block"
                     style={{
                       WebkitTapHighlightColor: "rgba(255,255,255,0.16)",
