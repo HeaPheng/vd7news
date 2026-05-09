@@ -1,9 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { FiClock } from "react-icons/fi";
-import { useRef, useState } from "react";
+import { formatDate, getRelativeTimeKhmer } from "@/lib/utils";
 
 type NewsCardProps = {
   slug: string;
@@ -17,36 +15,6 @@ type NewsCardProps = {
   compact?: boolean;
   horizontal?: boolean;
 };
-
-function formatDate(dateString?: string) {
-  if (!dateString) return "";
-
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-
-  return `${day}/${month}/${year}`;
-}
-
-function getRelativeTime(date: string) {
-  const now = new Date();
-  const past = new Date(date);
-  const diffMs = now.getTime() - past.getTime();
-
-  const minutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  const years = Math.floor(days / 365);
-
-  if (minutes < 1) return "មុននេះបន្តិច";
-  if (minutes < 60) return `${minutes} នាទីមុន`;
-  if (hours < 24) return `${hours} ម៉ោងមុន`;
-  if (days < 30) return `${days} ថ្ងៃមុន`;
-  if (months < 12) return `${months} ខែមុន`;
-  return `${years} ឆ្នាំមុន`;
-}
 
 function renderMeta(date?: string, author?: string, small = false) {
   if (!date && !author) return null;
@@ -63,7 +31,7 @@ function renderMeta(date?: string, author?: string, small = false) {
         <>
           <FiClock className="text-gray-500" />
           <span>
-            {getRelativeTime(date)} — {formatDate(date)}
+            {getRelativeTimeKhmer(date)} — {formatDate(date)}
           </span>
         </>
       )}
@@ -84,94 +52,34 @@ export default function NewsCard({
   compact = false,
   horizontal = false,
 }: NewsCardProps) {
-  const [pressed, setPressed] = useState(false);
-  const releaseTimerRef = useRef<number | null>(null);
-
-  const clearReleaseTimer = () => {
-    if (releaseTimerRef.current) {
-      window.clearTimeout(releaseTimerRef.current);
-      releaseTimerRef.current = null;
-    }
-  };
-
-  const handlePressStart = () => {
-    clearReleaseTimer();
-    setPressed(true);
-  };
-
-  const handlePressEnd = () => {
-    clearReleaseTimer();
-    releaseTimerRef.current = window.setTimeout(() => {
-      setPressed(false);
-    }, 150);
-  };
-
-  const handlePressCancel = () => {
-    clearReleaseTimer();
-    setPressed(false);
-  };
-
-  const cardBaseClass = `group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full ${
-    pressed
-      ? "scale-[0.975] border-red-500/40 bg-white/[0.08] ring-2 ring-red-500/20"
-      : "scale-100 hover:border-red-500/40"
-  }`;
-
-  const imageClass = `w-full object-cover transition-all duration-200 ${
-    pressed ? "scale-[1.03] brightness-110" : "group-hover:scale-105"
-  }`;
-
-  const titleClass = `font-bold text-white transition-all duration-150 ${
-    pressed ? "text-red-400" : "group-hover:text-red-400"
-  }`;
-
   const badgeLink = categoryName && categorySlug ? (
     <Link
       href={`/category/${categorySlug}`}
-      className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold transition-all duration-150 ${
-        pressed
-          ? "bg-red-600/25 text-red-300"
-          : "bg-red-600/15 text-red-400"
-      }`}
-      style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
+      className="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold bg-red-600/15 text-red-400 transition-all duration-150 active:bg-red-600/25 active:text-red-300"
     >
       {categoryName}
     </Link>
   ) : categoryName ? (
-    <span
-      className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold transition-all duration-150 ${
-        pressed
-          ? "bg-red-600/25 text-red-300"
-          : "bg-red-600/15 text-red-400"
-      }`}
-    >
+    <span className="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold bg-red-600/15 text-red-400">
       {categoryName}
     </span>
   ) : null;
 
   if (horizontal) {
     return (
-      <article
-        className={`${cardBaseClass} h-[420px] rounded-2xl md:h-[260px]`}
-        onPointerDown={handlePressStart}
-        onPointerUp={handlePressEnd}
-        onPointerLeave={handlePressCancel}
-        onPointerCancel={handlePressCancel}
-        style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-      >
+      <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full h-[420px] rounded-2xl md:h-[260px] active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
         <div className="flex h-full flex-col md:flex-row">
           {image && (
             <Link
               href={`/post/${slug}`}
               className="block shrink-0 md:w-40 xl:w-44"
-              style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
             >
               <Image
                 src={image}
                 alt={title}
                 width={600}
                 height={400}
-                className={`h-44 md:h-full ${imageClass}`}
+                className="h-44 md:h-full w-full object-cover transition-all duration-200 group-hover:scale-105 group-active:scale-[1.03]"
                 sizes="(max-width: 768px) 100vw, 180px"
               />
             </Link>
@@ -180,12 +88,8 @@ export default function NewsCard({
           <div className="flex flex-1 flex-col p-4">
             {categoryName && <div className="mb-2">{badgeLink}</div>}
 
-            <Link
-              href={`/post/${slug}`}
-              className="block"
-              style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-            >
-              <h3 className={`mb-2 line-clamp-2 text-base leading-6 ${titleClass}`}>
+            <Link href={`/post/${slug}`} className="block">
+              <h3 className="mb-2 line-clamp-2 text-base leading-6 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
                 {title}
               </h3>
             </Link>
@@ -207,19 +111,8 @@ export default function NewsCard({
 
   if (compact) {
     return (
-      <article
-        className={`${cardBaseClass} flex h-[360px] flex-col rounded-2xl`}
-        onPointerDown={handlePressStart}
-        onPointerUp={handlePressEnd}
-        onPointerLeave={handlePressCancel}
-        onPointerCancel={handlePressCancel}
-        style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-      >
-        <Link
-          href={`/post/${slug}`}
-          className="block shrink-0"
-          style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-        >
+      <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full flex h-[360px] flex-col rounded-2xl active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
+        <Link href={`/post/${slug}`} className="block shrink-0">
           {image && (
             <div className="overflow-hidden">
               <Image
@@ -227,7 +120,7 @@ export default function NewsCard({
                 alt={title}
                 width={600}
                 height={400}
-                className={`h-40 ${imageClass}`}
+                className="h-40 w-full object-cover transition-all duration-200 group-hover:scale-105 group-active:scale-[1.03]"
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
             </div>
@@ -237,12 +130,8 @@ export default function NewsCard({
         <div className="flex flex-1 flex-col p-4">
           {categoryName && <div className="mb-2">{badgeLink}</div>}
 
-          <Link
-            href={`/post/${slug}`}
-            className="block"
-            style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-          >
-            <h3 className={`mb-2 line-clamp-2 text-base leading-6 ${titleClass}`}>
+          <Link href={`/post/${slug}`} className="block">
+            <h3 className="mb-2 line-clamp-2 text-base leading-6 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
               {title}
             </h3>
           </Link>
@@ -262,29 +151,18 @@ export default function NewsCard({
   }
 
   return (
-    <article
-      className={`${cardBaseClass} flex h-[400px] flex-col rounded-3xl sm:h-[420px] lg:h-[460px]`}
-      onPointerDown={handlePressStart}
-      onPointerUp={handlePressEnd}
-      onPointerLeave={handlePressCancel}
-      onPointerCancel={handlePressCancel}
-      style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-    >
-      <Link
-        href={`/post/${slug}`}
-        className="block shrink-0"
-        style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-      >
+    <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full flex h-[400px] flex-col rounded-3xl sm:h-[420px] lg:h-[460px] active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
+      <Link href={`/post/${slug}`} className="block shrink-0">
         {image && (
           <div className="overflow-hidden">
-              <Image
-                src={image}
-                alt={title}
-                width={600}
-                height={400}
-                className={`h-40 sm:h-44 lg:h-52 ${imageClass}`}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
+            <Image
+              src={image}
+              alt={title}
+              width={600}
+              height={400}
+              className="h-40 sm:h-44 lg:h-52 w-full object-cover transition-all duration-200 group-hover:scale-105 group-active:scale-[1.03]"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
           </div>
         )}
       </Link>
@@ -292,14 +170,8 @@ export default function NewsCard({
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         {categoryName && <div className="mb-3">{badgeLink}</div>}
 
-        <Link
-          href={`/post/${slug}`}
-          className="block"
-          style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-        >
-          <h3
-            className={`mb-2 line-clamp-2 text-base leading-6 sm:text-lg sm:leading-7 ${titleClass}`}
-          >
+        <Link href={`/post/${slug}`} className="block">
+          <h3 className="mb-2 line-clamp-2 text-base leading-6 sm:text-lg sm:leading-7 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
             {title}
           </h3>
         </Link>

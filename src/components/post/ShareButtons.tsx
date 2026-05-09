@@ -1,4 +1,4 @@
-"use client";
+import CopyLinkButton from "./CopyLinkButton";
 
 type ShareButtonsProps = {
   title: string;
@@ -100,34 +100,6 @@ function LineIcon() {
   );
 }
 
-function CopyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
-      <rect x="9" y="9" width="11" height="11" rx="2" fill="#64748b" />
-      <rect
-        x="4"
-        y="4"
-        width="11"
-        height="11"
-        rx="2"
-        fill="none"
-        stroke="#94a3b8"
-        strokeWidth="1.15"
-      />
-      <rect
-        x="9"
-        y="9"
-        width="11"
-        height="11"
-        rx="2"
-        fill="none"
-        stroke="#475569"
-        strokeWidth="1.15"
-      />
-    </svg>
-  );
-}
-
 export default function ShareButtons({ title, url }: ShareButtonsProps) {
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
@@ -138,10 +110,6 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`;
   const wechat = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUrl}`;
   const line = `https://social-plugins.line.me/lineit/share?url=${encodedUrl}`;
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(url);
-  };
 
   return (
     <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2.5 max-sm:items-center">
@@ -210,14 +178,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
           <LineIcon />
         </a>
 
-        <button
-          onClick={copy}
-          className="share-btn inline-flex items-center justify-center"
-          aria-label="Copy link"
-          type="button"
-        >
-          <CopyIcon />
-        </button>
+        <CopyLinkButton url={url} />
       </div>
     </div>
   );

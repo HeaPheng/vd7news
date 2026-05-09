@@ -24,6 +24,7 @@ type Post = {
 type Props = {
   categoryId: number;
   categoryName: string;
+  initialPosts?: Post[];
 };
 
 const POSTS_PER_PAGE = 9;
@@ -32,25 +33,19 @@ function stripHtml(html: string = "") {
   return html.replace(/<[^>]*>/g, "").trim();
 }
 
-function CardSkeleton() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-      <div className="h-32 w-full animate-pulse bg-white/10 sm:h-40 lg:h-48" />
-      <div className="space-y-2 p-3 sm:p-4">
-        <div className="h-3 w-20 animate-pulse rounded-full bg-white/10" />
-        <div className="h-4 w-full animate-pulse rounded-lg bg-white/10" />
-        <div className="h-4 w-4/5 animate-pulse rounded-lg bg-white/10" />
-        <div className="h-3 w-24 animate-pulse rounded-lg bg-white/10" />
-      </div>
-    </div>
-  );
-}
-
 function LoadMoreSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 3 }).map((_, index) => (
-        <CardSkeleton key={index} />
+        <div key={index} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <div className="h-32 w-full skeleton-shimmer sm:h-40 lg:h-48" />
+          <div className="space-y-2 p-3 sm:p-4">
+            <div className="h-3 w-20 skeleton-shimmer rounded-full" />
+            <div className="h-4 w-full skeleton-shimmer rounded-lg" />
+            <div className="h-4 w-4/5 skeleton-shimmer rounded-lg" />
+            <div className="h-3 w-24 skeleton-shimmer rounded-lg" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -59,31 +54,21 @@ function LoadMoreSkeleton() {
 export default function CategoryPostGrid({
   categoryId,
   categoryName,
+  initialPosts,
 }: Props) {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const hasInitialData = Array.isArray(initialPosts) && initialPosts.length > 0;
+
+  const [posts, setPosts] = useState<Post[]>(hasInitialData ? initialPosts : []);
   const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [pressedId, setPressedId] = useState<number | null>(null);
+  const [initialLoading, setInitialLoading] = useState(!hasInitialData);
+  const [hasMore, setHasMore] = useState(
+    hasInitialData ? initialPosts.length >= POSTS_PER_PAGE : true
+  );
 
   const loaderRef = useRef<HTMLDivElement | null>(null);
-  const nextPageRef = useRef(1);
-  const initialLoadedRef = useRef(false);
-  const releaseTimerRef = useRef<number | null>(null);
-
-  const clearReleaseTimer = () => {
-    if (releaseTimerRef.current) {
-      window.clearTimeout(releaseTimerRef.current);
-      releaseTimerRef.current = null;
-    }
-  };
-
-  const holdRelease = () => {
-    clearReleaseTimer();
-    releaseTimerRef.current = window.setTimeout(() => {
-      setPressedId(null);
-    }, 160);
-  };
+  // Start from page 2 if we already have initial data
+  const nextPageRef = useRef(hasInitialData ? 2 : 1);
+  const initialLoadedRef = useRef(hasInitialData);
 
   const loadPosts = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -124,23 +109,25 @@ export default function CategoryPostGrid({
     }
   }, [categoryId, loading, hasMore]);
 
+  // Reset when categoryId changes (but only if no initial data or category changes)
   useEffect(() => {
+    if (hasInitialData) return;
     setPosts([]);
     setHasMore(true);
     setLoading(false);
     setInitialLoading(true);
-    setPressedId(null);
     nextPageRef.current = 1;
     initialLoadedRef.current = false;
-    clearReleaseTimer();
-  }, [categoryId]);
+  }, [categoryId, hasInitialData]);
 
+  // Load first page only if no initial data was provided
   useEffect(() => {
     if (initialLoadedRef.current) return;
     initialLoadedRef.current = true;
     loadPosts();
   }, [loadPosts]);
 
+  // Infinite scroll observer
   useEffect(() => {
     const target = loaderRef.current;
     if (!target) return;
@@ -163,15 +150,7 @@ export default function CategoryPostGrid({
   }, [loadPosts, loading, hasMore]);
 
   if (initialLoading) {
-    return (
-      <>
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <CardSkeleton key={index} />
-          ))}
-        </section>
-      </>
-    );
+    return <LoadMoreSkeleton />;
   }
 
   if (!loading && posts.length === 0) {
@@ -186,40 +165,22 @@ export default function CategoryPostGrid({
             post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
             "/images/placeholders/default-post.jpg";
 
-          const isPressed = pressedId === post.id;
-
           return (
-            <div
+            <NewsCard
               key={post.id}
-              onPointerDown={() => setPressedId(post.id)}
-              onPointerUp={holdRelease}
-              onPointerLeave={() => setPressedId(null)}
-              onPointerCancel={() => setPressedId(null)}
-              className={`rounded-2xl transition-all duration-150 ${
-                isPressed
-                  ? "scale-[0.97] brightness-110 ring-2 ring-red-500/30"
-                  : "scale-100"
-              }`}
-            >
-              <NewsCard
-                slug={post.slug}
-                title={post.title.rendered}
-                image={image}
-                excerpt={stripHtml(post.excerpt?.rendered || "")}
-                date={post.date}
-                categoryName={categoryName}
-              />
-            </div>
+              slug={post.slug}
+              title={post.title.rendered}
+              image={image}
+              excerpt={stripHtml(post.excerpt?.rendered || "")}
+              date={post.date}
+              categoryName={categoryName}
+            />
           );
         })}
       </section>
 
       <div ref={loaderRef} className="mt-5 min-h-16">
-        {loading && posts.length > 0 && (
-          <p className="text-sm text-gray-400 text-center">
-            កំពុងផ្ទុកព័ត៌មានបន្ថែម...
-          </p>
-        )}
+        {loading && posts.length > 0 && <LoadMoreSkeleton />}
 
         {!hasMore && posts.length > 0 && !loading && (
           <p className="text-sm text-gray-500 text-center">

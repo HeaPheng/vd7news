@@ -153,6 +153,7 @@ export default function PostPopupAd() {
           : "pointer-events-none bg-black/0 opacity-0"
       }`}
       aria-hidden={!visible}
+      inert={!visible || undefined}
       onClick={closePopup}
     >
       <div

@@ -232,3 +232,24 @@ export function buildPostsByCategoryUrl(
 ): string {
   return `${WP_API_URL}/posts?categories=${categoryId}&_embed&per_page=${perPage}&page=${page}&_fields=${WP_LIST_FIELDS}`;
 }
+
+/**
+ * Get posts by category ID (server-side, for SSR first page).
+ */
+export async function getPostsByCategoryId(
+  categoryId: number,
+  perPage = 9,
+  page = 1
+): Promise<WPPost[]> {
+  try {
+    return await fetchFromWP<WPPost[]>(
+      `/posts?categories=${categoryId}&_embed&per_page=${perPage}&page=${page}&_fields=${WP_LIST_FIELDS}`,
+      {
+        revalidate: 120,
+        tags: [`category-id-${categoryId}`],
+      }
+    );
+  } catch {
+    return [];
+  }
+}

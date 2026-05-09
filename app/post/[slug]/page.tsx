@@ -7,7 +7,7 @@ import ShareButtons from "@/src/components/post/ShareButtons";
 import ScrollButtons from "@/src/components/post/ScrollButtons";
 import ArticleContentWithLightbox from "@/src/components/post/ArticleContentWithLightbox";
 import ArticleTopAds from "@/src/components/post/ArticleTopAds";
-import PostRelatedSectionsLazy from "@/src/components/post/PostRelatedSectionsLazy";
+import PostRelatedSections from "@/src/components/post/PostRelatedSections";
 import { getPostBySlug } from "@/lib/wordpress";
 import type { WPPost } from "@/lib/wordpress";
 import { formatDate, getRelativeTimeKhmer } from "@/lib/utils";
@@ -175,8 +175,8 @@ async function PostContent({ slug }: { slug: string }) {
               </div>
             </article>
 
-            <Suspense fallback={<div className="mt-8 h-40 animate-pulse rounded-2xl bg-white/5" />}>
-              <PostRelatedSectionsLazy key={normalizedSlug} slug={normalizedSlug} />
+            <Suspense fallback={<div className="mt-8 h-40 skeleton-shimmer rounded-2xl" />}>
+              <PostRelatedSections slug={normalizedSlug} currentPostId={post.id} />
             </Suspense>
           </main>
 

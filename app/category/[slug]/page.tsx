@@ -1,7 +1,8 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import CategoryPostGrid from "../../../src/components/CategoryPostGrid";
-import { getCategoryBySlug } from "@/lib/wordpress";
+import { getCategoryBySlug, getPostsByCategoryId } from "@/lib/wordpress";
 
 const categoryActionMap: Record<
   string,
@@ -54,6 +55,9 @@ export default async function CategoryPage({
     );
   }
 
+  // Fetch first page server-side for instant render + SEO
+  const initialPosts = await getPostsByCategoryId(category.id, 9, 1);
+
   const categoryAction = categoryActionMap[category.slug];
 
   return (
@@ -96,7 +100,11 @@ export default async function CategoryPage({
         </p>
       </section>
 
-      <CategoryPostGrid categoryId={category.id} categoryName={category.name} />
+      <CategoryPostGrid
+        categoryId={category.id}
+        categoryName={category.name}
+        initialPosts={initialPosts}
+      />
     </main>
   );
 }
