@@ -80,9 +80,16 @@ export function buildPostUrl(id: number, slug: string): string {
   const trimmedSlug = slug?.trim();
   if (!trimmedSlug) return `/post/${id}`;
 
-  // If slug contains ANY non-ASCII character, use ID only
+  let decodedSlug = trimmedSlug;
+  try {
+    decodedSlug = decodeURIComponent(trimmedSlug);
+  } catch {
+    decodedSlug = trimmedSlug;
+  }
+
+  // If slug contains ANY non-ASCII character (after decoding), use ID only
   // eslint-disable-next-line no-control-regex
-  if (/[^\x00-\x7F]/.test(trimmedSlug)) return `/post/${id}`;
+  if (/[^\x00-\x7F]/.test(decodedSlug)) return `/post/${id}`;
 
   return `/post/${id}-${trimmedSlug}`;
 }
