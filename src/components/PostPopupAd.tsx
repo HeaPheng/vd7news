@@ -64,10 +64,7 @@ export default function PostPopupAd() {
     const fetchAd = async () => {
       try {
         const res = await fetch(
-          buildWpSiteUrl("/wp-json/vd7/v1/popup-ad?nocache=1"),
-          {
-            cache: "no-store",
-          }
+          buildWpSiteUrl("/wp-json/vd7/v1/popup-ad"),
         );
 
         if (!res.ok) {

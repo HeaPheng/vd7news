@@ -4,42 +4,17 @@ import NewsCard from "../src/components/NewsCard";
 import ArticleTopAdsClient, {
   AdItem,
 } from "../src/components/post/ArticleTopAdsClient";
+import {
+  getLatestPosts,
+  getPostsByCategorySlug,
+  getCategoryBySlug,
+  fetchFromWPSite,
+  type WPPost,
+  type WPCategory,
+} from "@/lib/wordpress";
+import { stripHtml, truncate } from "@/lib/utils";
 
-type WPAuthor = {
-  name: string;
-};
-
-type WPTerm = {
-  id: number;
-  name: string;
-  slug: string;
-  taxonomy: string;
-};
-
-type WPPost = {
-  id: number;
-  slug: string;
-  date: string;
-  title: {
-    rendered: string;
-  };
-  excerpt: {
-    rendered: string;
-  };
-  _embedded?: {
-    author?: WPAuthor[];
-    "wp:featuredmedia"?: {
-      source_url: string;
-    }[];
-    "wp:term"?: WPTerm[][];
-  };
-};
-
-type Category = {
-  id: number;
-  name: string;
-  slug: string;
-};
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type MappedPost = {
   id: number;
@@ -58,57 +33,9 @@ type AdsListResponse = {
   items: AdItem[];
 };
 
-const wpApiUrl = process.env.NEXT_PUBLIC_WP_API_URL ?? "";
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-if (!wpApiUrl) {
-  throw new Error("NEXT_PUBLIC_WP_API_URL is not defined");
-}
-
-const WP_API_URL: string = wpApiUrl.replace(/\/$/, "");
-
-const WP_SITE_URL: string = (
-  process.env.NEXT_PUBLIC_WORDPRESS_SITE_URL ||
-  process.env.WORDPRESS_SITE_URL ||
-  WP_API_URL.replace(/\/wp-json\/wp\/v2\/?$/, "")
-).replace(/\/$/, "");
-
-function buildWpApiUrl(endpoint: string): string {
-  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${WP_API_URL}${path}`;
-}
-
-function buildWpSiteUrl(path: string): string {
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${WP_SITE_URL}${cleanPath}`;
-}
-
-async function fetchWpJson<T>(
-  endpoint: string,
-  revalidate: number = 120
-): Promise<T> {
-  const res = await fetch(buildWpApiUrl(endpoint), {
-    next: { revalidate },
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      `WordPress API request failed: ${res.status} ${res.statusText}`
-    );
-  }
-
-  return res.json();
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
-
-function truncate(text: string, max: number): string {
-  if (text.length <= max) return text;
-  return text.slice(0, max).trim() + "...";
-}
-
-function getPrimaryCategory(post: WPPost): WPTerm | null {
+function getPrimaryCategory(post: WPPost) {
   const terms = post._embedded?.["wp:term"] || [];
   const flat = terms.flat();
   return flat.find((term) => term.taxonomy === "category") || null;
@@ -135,43 +62,15 @@ function mapPost(
   };
 }
 
-async function getLatestPosts(limit = 4): Promise<WPPost[]> {
-  try {
-    return await fetchWpJson<WPPost[]>(`/posts?_embed&per_page=${limit}`, 120);
-  } catch {
-    return [];
-  }
-}
-
-async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  try {
-    const data = await fetchWpJson<Category[]>(
-      `/categories?slug=${encodeURIComponent(slug)}`,
-      600
-    );
-
-    return data[0] || null;
-  } catch {
-    return null;
-  }
-}
-
 async function getPostsByCategory(
   categorySlug: string,
   limit = 4
-): Promise<{ category: Category | null; posts: WPPost[] }> {
+): Promise<{ category: WPCategory | null; posts: WPPost[] }> {
   const category = await getCategoryBySlug(categorySlug);
-
-  if (!category) {
-    return { category: null, posts: [] };
-  }
+  if (!category) return { category: null, posts: [] };
 
   try {
-    const posts = await fetchWpJson<WPPost[]>(
-      `/posts?categories=${category.id}&_embed&per_page=${limit}`,
-      120
-    );
-
+    const posts = await getPostsByCategorySlug(categorySlug, limit);
     return { category, posts };
   } catch {
     return { category, posts: [] };
@@ -180,21 +79,17 @@ async function getPostsByCategory(
 
 async function getHomeSliderAds(): Promise<AdItem[]> {
   try {
-    const res = await fetch(
-      buildWpSiteUrl("/wp-json/vd7/v1/ads?placement=article_slider"),
-      {
-        next: { revalidate: 120 },
-      }
+    const data = await fetchFromWPSite<AdsListResponse>(
+      "/wp-json/vd7/v1/ads?placement=article_slider",
+      { revalidate: 120 }
     );
-
-    if (!res.ok) return [];
-
-    const data = (await res.json()) as AdsListResponse;
     return Array.isArray(data.items) ? data.items : [];
   } catch {
     return [];
   }
 }
+
+// ─── Components ───────────────────────────────────────────────────────────────
 
 function SectionHeader({
   title,
@@ -267,6 +162,8 @@ function CategoryRow({
     </section>
   );
 }
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function Home() {
   const [

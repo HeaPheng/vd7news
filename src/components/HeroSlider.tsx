@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type SlidePost = {
@@ -100,13 +101,16 @@ export default function HeroSlider({ posts }: HeroSliderProps) {
           className="flex h-full transition-transform duration-700 ease-in-out"
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
-          {posts.map((post) => (
+          {posts.map((post, index) => (
             <div key={post.id} className="relative h-full min-w-full">
               {post.image && (
-                <img
+                <Image
                   src={post.image}
                   alt={post.title}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1280px) 100vw, 65vw"
+                  priority={index === 0}
                 />
               )}
 

@@ -10,6 +10,7 @@ import ArticleTopAds from "@/src/components/post/ArticleTopAds";
 import PostRelatedSectionsLazy from "@/src/components/post/PostRelatedSectionsLazy";
 import { getPostBySlug } from "@/lib/wordpress";
 import type { WPPost } from "@/lib/wordpress";
+import { formatDate, getRelativeTimeKhmer } from "@/lib/utils";
 
 // ─── Page Entry ───────────────────────────────────────────────────────────────
 
@@ -85,12 +86,13 @@ async function PostContent({ slug }: { slug: string }) {
             <article className="overflow-hidden rounded-[28px] border border-white/10 bg-[#10182b] shadow-2xl">
               {/* Hero Image */}
               <div className="relative h-[260px] sm:h-[340px] lg:h-[430px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={featuredImage}
                   alt={post.title.rendered}
-                  fetchPriority="high"
-                  className="h-full w-full object-cover"
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 1280px) 100vw, 1120px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#10182b] via-[#10182b]/35 to-transparent" />
               </div>
@@ -112,7 +114,7 @@ async function PostContent({ slug }: { slug: string }) {
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/60 sm:text-sm">
                   <span>
-                    {getRelativeTime(post.date)} — {formatDate(post.date)}
+                    {getRelativeTimeKhmer(post.date)} — {formatDate(post.date)}
                   </span>
                 </div>
 
@@ -217,33 +219,6 @@ function getPostTerms(post: WPPost) {
 
 function getPrimaryCategory(post: WPPost) {
   return getPostTerms(post)[0] || null;
-}
-
-function formatDate(date: string) {
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-function getRelativeTime(date: string) {
-  const now = new Date();
-  const past = new Date(date);
-  const diffMs = now.getTime() - past.getTime();
-  const minutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (minutes < 1) return "មុននេះបន្តិច";
-  if (minutes < 60) return `${minutes} នាទីមុន`;
-  if (hours < 24) return `${hours} ម៉ោងមុន`;
-  if (days < 30) return `${days} ថ្ងៃមុន`;
-
-  const months = Math.floor(days / 30);
-  if (months >= 1 && months < 12) return `${months} ខែមុន`;
-
-  return `${Math.floor(days / 365)} ឆ្នាំមុន`;
 }
 
 // ─── UI Components ────────────────────────────────────────────────────────────

@@ -1,12 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import CategoryPostGrid from "../../../src/components/CategoryPostGrid";
-
-type Category = {
-  id: number;
-  name: string;
-  slug: string;
-};
+import { getCategoryBySlug } from "@/lib/wordpress";
 
 const categoryActionMap: Record<
   string,
@@ -42,49 +37,6 @@ const categoryActionMap: Record<
     logo: "/images/logo/logo.png",
   },
 };
-
-const wpApiUrl = process.env.NEXT_PUBLIC_WP_API_URL ?? "";
-
-if (!wpApiUrl) {
-  throw new Error("NEXT_PUBLIC_WP_API_URL is not defined");
-}
-
-const WP_API_URL: string = wpApiUrl.replace(/\/$/, "");
-
-function buildWpApiUrl(endpoint: string): string {
-  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${WP_API_URL}${path}`;
-}
-
-async function fetchWpJson<T>(
-  endpoint: string,
-  revalidate: number = 300
-): Promise<T> {
-  const res = await fetch(buildWpApiUrl(endpoint), {
-    next: { revalidate },
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      `WordPress API request failed: ${res.status} ${res.statusText}`
-    );
-  }
-
-  return res.json();
-}
-
-async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  try {
-    const data = await fetchWpJson<Category[]>(
-      `/categories?slug=${encodeURIComponent(slug)}`,
-      600
-    );
-
-    return data[0] || null;
-  } catch {
-    return null;
-  }
-}
 
 export default async function CategoryPage({
   params,

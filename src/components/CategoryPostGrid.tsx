@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import NewsCard from "./NewsCard";
+import { buildPostsByCategoryUrl } from "@/lib/wordpress";
 
 type Post = {
   id: number;
@@ -26,16 +27,9 @@ type Props = {
 };
 
 const POSTS_PER_PAGE = 9;
-const wpApiUrl = process.env.NEXT_PUBLIC_WP_API_URL ?? "";
 
 function stripHtml(html: string = "") {
   return html.replace(/<[^>]*>/g, "").trim();
-}
-
-function buildWpApiUrl(endpoint: string): string {
-  const base = wpApiUrl.replace(/\/$/, "");
-  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${base}${path}`;
 }
 
 function CardSkeleton() {
@@ -92,13 +86,6 @@ export default function CategoryPostGrid({
   };
 
   const loadPosts = useCallback(async () => {
-    if (!wpApiUrl) {
-      console.error("NEXT_PUBLIC_WP_API_URL is not defined");
-      setHasMore(false);
-      setInitialLoading(false);
-      return;
-    }
-
     if (loading || !hasMore) return;
 
     setLoading(true);
@@ -107,12 +94,7 @@ export default function CategoryPostGrid({
       const currentPage = nextPageRef.current;
 
       const res = await fetch(
-        buildWpApiUrl(
-          `/posts?categories=${categoryId}&_embed&per_page=${POSTS_PER_PAGE}&page=${currentPage}`
-        ),
-        {
-          cache: "no-store",
-        }
+        buildPostsByCategoryUrl(categoryId, currentPage, POSTS_PER_PAGE)
       );
 
       if (!res.ok) {

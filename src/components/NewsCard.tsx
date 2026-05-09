@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FiClock } from "react-icons/fi";
 import { useRef, useState } from "react";
 
@@ -165,10 +166,13 @@ export default function NewsCard({
               className="block shrink-0 md:w-40 xl:w-44"
               style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
             >
-              <img
+              <Image
                 src={image}
                 alt={title}
+                width={600}
+                height={400}
                 className={`h-44 md:h-full ${imageClass}`}
+                sizes="(max-width: 768px) 100vw, 180px"
               />
             </Link>
           )}
@@ -218,10 +222,13 @@ export default function NewsCard({
         >
           {image && (
             <div className="overflow-hidden">
-              <img
+              <Image
                 src={image}
                 alt={title}
+                width={600}
+                height={400}
                 className={`h-40 ${imageClass}`}
+                sizes="(max-width: 768px) 50vw, 25vw"
               />
             </div>
           )}
@@ -270,11 +277,14 @@ export default function NewsCard({
       >
         {image && (
           <div className="overflow-hidden">
-            <img
-              src={image}
-              alt={title}
-              className={`h-40 sm:h-44 lg:h-52 ${imageClass}`}
-            />
+              <Image
+                src={image}
+                alt={title}
+                width={600}
+                height={400}
+                className={`h-40 sm:h-44 lg:h-52 ${imageClass}`}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
           </div>
         )}
       </Link>

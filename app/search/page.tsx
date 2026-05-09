@@ -1,72 +1,6 @@
 import NewsCard from "../../src/components/NewsCard";
-
-type Post = {
-  id: number;
-  slug: string;
-  date: string;
-  title: {
-    rendered: string;
-  };
-  excerpt?: {
-    rendered: string;
-  };
-  _embedded?: {
-    "wp:featuredmedia"?: {
-      source_url: string;
-    }[];
-    "wp:term"?: Array<
-      {
-        id: number;
-        name: string;
-        slug: string;
-        taxonomy: string;
-      }[]
-    >;
-  };
-};
-
-const wpApiUrl = process.env.NEXT_PUBLIC_WP_API_URL ?? "";
-
-if (!wpApiUrl) {
-  throw new Error("NEXT_PUBLIC_WP_API_URL is not defined");
-}
-
-const WP_API_URL: string = wpApiUrl;
-
-function buildWpApiUrl(endpoint: string): string {
-  const base = WP_API_URL.replace(/\/$/, "");
-  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${base}${path}`;
-}
-
-function stripHtml(html?: string) {
-  if (!html) return "";
-  return html.replace(/<[^>]*>/g, "").trim();
-}
-
-async function fetchWpJson<T>(endpoint: string): Promise<T> {
-  const res = await fetch(buildWpApiUrl(endpoint), {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(
-      `WordPress API request failed: ${res.status} ${res.statusText}`
-    );
-  }
-
-  return res.json();
-}
-
-async function searchPosts(query: string): Promise<Post[]> {
-  try {
-    return await fetchWpJson<Post[]>(
-      `/posts?search=${encodeURIComponent(query)}&_embed&per_page=20`
-    );
-  } catch {
-    return [];
-  }
-}
+import { searchPosts, type WPPost } from "@/lib/wordpress";
+import { stripHtml } from "@/lib/utils";
 
 export default async function SearchPage({
   searchParams,
@@ -113,7 +47,7 @@ export default async function SearchPage({
 
             {keyword && (
               <span className="shrink-0 text-base font-semibold text-red-400 sm:text-lg">
-                “{keyword}”
+                &ldquo;{keyword}&rdquo;
               </span>
             )}
           </div>
@@ -147,7 +81,7 @@ export default async function SearchPage({
             </div>
           ) : keyword ? (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {posts.map((post) => {
+              {posts.map((post: WPPost) => {
                 const image =
                   post._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
 

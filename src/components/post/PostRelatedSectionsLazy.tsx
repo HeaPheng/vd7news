@@ -236,7 +236,7 @@ export default function PostRelatedSectionsLazy({
 
         const json = (await res.json()) as RelatedResponse;
 
-        console.log("Related content JSON:", json);
+
 
         if (isMounted) {
           setData(json);
