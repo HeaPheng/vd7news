@@ -24,6 +24,21 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  async rewrites() {
+    return [
+      {
+        // Proxy old WordPress media files to the CMS subdomain
+        // This ensures old image URLs (vd7news.com/wp-content/...) still work after switching DNS
+        source: "/wp-content/:path*",
+        destination: "https://cms.vd7news.com/wp-content/:path*",
+      },
+      {
+        source: "/wp-includes/:path*",
+        destination: "https://cms.vd7news.com/wp-includes/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
