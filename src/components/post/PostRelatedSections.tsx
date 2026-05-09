@@ -5,7 +5,7 @@ import {
   getLatestPosts,
   type WPPost,
 } from "@/lib/wordpress";
-import { formatDate, getRelativeTimeKhmer } from "@/lib/utils";
+import { formatDate, getRelativeTimeKhmer, buildPostUrl } from "@/lib/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ function renderTags(post: WPPost, limit: number = 2) {
 function PostCard({ post }: { post: WPPost }) {
   return (
     <Link
-      href={`/post/${post.slug}`}
+      href={buildPostUrl(post.id, post.slug)}
       className="group overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
     >
       <Image
@@ -89,7 +89,7 @@ function MobileRealEstateList({ posts }: { posts: WPPost[] }) {
         {posts.map((item) => (
           <Link
             key={item.id}
-            href={`/post/${item.slug}`}
+            href={buildPostUrl(item.id, item.slug)}
             className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
           >
             <Image
@@ -134,7 +134,7 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
           {posts.map((item) => (
             <Link
               key={item.id}
-              href={`/post/${item.slug}`}
+              href={buildPostUrl(item.id, item.slug)}
               className="group block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all duration-200 hover:bg-white/10 active:scale-[0.985] active:bg-white/10"
             >
               <Image

@@ -134,6 +134,24 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
 }
 
 /**
+ * Get a single post by numeric ID (full content, for detail pages).
+ * Faster than slug lookup — WP uses primary key index directly.
+ */
+export async function getPostById(id: number): Promise<WPPost | null> {
+  try {
+    return await fetchFromWP<WPPost>(
+      `/posts/${id}?_embed`,
+      {
+        revalidate: 120,
+        tags: [`post-id-${id}`],
+      }
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get latest posts (list view — excludes content for smaller payloads).
  */
 export async function getLatestPosts(perPage = 6): Promise<WPPost[]> {

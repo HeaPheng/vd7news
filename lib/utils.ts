@@ -64,3 +64,52 @@ export function getRelativeTimeKhmer(
   if (months >= 1 && months < 12) return `${months} ខែមុន`;
   return `${years} ឆ្នាំមុន`;
 }
+
+// ─── URL Utilities ────────────────────────────────────────────────────────────
+
+/**
+ * Build a clean article URL in the format: /post/{id}-{slug}
+ * The ID is used for fetching; the slug is cosmetic/SEO.
+ *
+ * For non-ASCII slugs (Khmer, etc.), we use ID-only URLs to avoid
+ * ugly percent-encoded strings when the URL is copied or shared.
+ *   - Khmer:   /post/5643          (clean, short)
+ *   - English: /post/5726-breaking-news (readable + SEO)
+ */
+export function buildPostUrl(id: number, slug: string): string {
+  const trimmedSlug = slug?.trim();
+  if (!trimmedSlug) return `/post/${id}`;
+
+  // If slug contains ANY non-ASCII character, use ID only
+  // eslint-disable-next-line no-control-regex
+  if (/[^\x00-\x7F]/.test(trimmedSlug)) return `/post/${id}`;
+
+  return `/post/${id}-${trimmedSlug}`;
+}
+
+/**
+ * Parse an idSlug route parameter into { id, slug }.
+ * Supports:
+ *   "5726-breaking-news"  → { id: 5726, slug: "breaking-news" }
+ *   "5726"                → { id: 5726, slug: "" }
+ *   "some-old-slug"       → null (no numeric ID prefix)
+ */
+export function parseIdSlug(
+  idSlug: string
+): { id: number; slug: string } | null {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(idSlug);
+  } catch {
+    decoded = idSlug;
+  }
+
+  // Match: starts with one or more digits, optionally followed by dash + rest
+  const match = decoded.match(/^(\d+)(?:-(.+))?$/);
+  if (!match) return null;
+
+  const id = parseInt(match[1], 10);
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  return { id, slug: match[2] || "" };
+}

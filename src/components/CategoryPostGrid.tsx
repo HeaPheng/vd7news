@@ -168,6 +168,7 @@ export default function CategoryPostGrid({
           return (
             <NewsCard
               key={post.id}
+              id={post.id}
               slug={post.slug}
               title={post.title.rendered}
               image={image}

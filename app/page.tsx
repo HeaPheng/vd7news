@@ -136,6 +136,7 @@ function CategoryRow({
         {posts.map((post) => (
           <NewsCard
             key={post.id}
+            id={post.id}
             slug={post.slug}
             title={post.title}
             image={post.image}
@@ -233,6 +234,7 @@ export default async function Home() {
             {realEstateCards.map((post) => (
               <NewsCard
                 key={post.id}
+                id={post.id}
                 slug={post.slug}
                 title={post.title}
                 image={post.image}

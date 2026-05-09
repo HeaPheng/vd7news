@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FiClock } from "react-icons/fi";
-import { formatDate, getRelativeTimeKhmer } from "@/lib/utils";
+import { formatDate, getRelativeTimeKhmer, buildPostUrl } from "@/lib/utils";
 
 type NewsCardProps = {
+  id: number;
   slug: string;
   title: string;
   image?: string;
@@ -41,6 +42,7 @@ function renderMeta(date?: string, author?: string, small = false) {
 }
 
 export default function NewsCard({
+  id,
   slug,
   title,
   image,
@@ -52,6 +54,8 @@ export default function NewsCard({
   compact = false,
   horizontal = false,
 }: NewsCardProps) {
+  const postHref = buildPostUrl(id, slug);
+
   const badgeLink = categoryName && categorySlug ? (
     <Link
       href={`/category/${categorySlug}`}
@@ -70,10 +74,7 @@ export default function NewsCard({
       <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full h-[420px] rounded-2xl md:h-[260px] active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
         <div className="flex h-full flex-col md:flex-row">
           {image && (
-            <Link
-              href={`/post/${slug}`}
-              className="block shrink-0 md:w-40 xl:w-44"
-            >
+            <Link href={postHref} className="block shrink-0 md:w-40 xl:w-44">
               <Image
                 src={image}
                 alt={title}
@@ -88,7 +89,7 @@ export default function NewsCard({
           <div className="flex flex-1 flex-col p-4">
             {categoryName && <div className="mb-2">{badgeLink}</div>}
 
-            <Link href={`/post/${slug}`} className="block">
+            <Link href={postHref} className="block">
               <h3 className="mb-2 line-clamp-2 text-base leading-6 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
                 {title}
               </h3>
@@ -112,7 +113,7 @@ export default function NewsCard({
   if (compact) {
     return (
       <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full flex h-[360px] flex-col rounded-2xl active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
-        <Link href={`/post/${slug}`} className="block shrink-0">
+        <Link href={postHref} className="block shrink-0">
           {image && (
             <div className="overflow-hidden">
               <Image
@@ -130,7 +131,7 @@ export default function NewsCard({
         <div className="flex flex-1 flex-col p-4">
           {categoryName && <div className="mb-2">{badgeLink}</div>}
 
-          <Link href={`/post/${slug}`} className="block">
+          <Link href={postHref} className="block">
             <h3 className="mb-2 line-clamp-2 text-base leading-6 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
               {title}
             </h3>
@@ -152,7 +153,7 @@ export default function NewsCard({
 
   return (
     <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full flex h-[400px] flex-col rounded-3xl sm:h-[420px] lg:h-[460px] active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
-      <Link href={`/post/${slug}`} className="block shrink-0">
+      <Link href={postHref} className="block shrink-0">
         {image && (
           <div className="overflow-hidden">
             <Image
@@ -170,7 +171,7 @@ export default function NewsCard({
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         {categoryName && <div className="mb-3">{badgeLink}</div>}
 
-        <Link href={`/post/${slug}`} className="block">
+        <Link href={postHref} className="block">
           <h3 className="mb-2 line-clamp-2 text-base leading-6 sm:text-lg sm:leading-7 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
             {title}
           </h3>

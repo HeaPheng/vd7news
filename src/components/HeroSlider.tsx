@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { buildPostUrl } from "@/lib/utils";
 
 type SlidePost = {
   id: number;
@@ -141,7 +142,7 @@ export default function HeroSlider({ posts }: HeroSliderProps) {
                   </div>
 
                   <Link
-                    href={`/post/${post.slug}`}
+                    href={buildPostUrl(post.id, post.slug)}
                     className="block"
                     style={{
                       WebkitTapHighlightColor: "rgba(255,255,255,0.16)",

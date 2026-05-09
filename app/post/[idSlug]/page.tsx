@@ -9,24 +9,57 @@ import ScrollButtons from "@/src/components/post/ScrollButtons";
 import ArticleContentWithLightbox from "@/src/components/post/ArticleContentWithLightbox";
 import ArticleTopAds from "@/src/components/post/ArticleTopAds";
 import PostRelatedSections from "@/src/components/post/PostRelatedSections";
-import { getPostBySlug } from "@/lib/wordpress";
+import { getPostById, getPostBySlug } from "@/lib/wordpress";
 import type { WPPost } from "@/lib/wordpress";
-import { formatDate, getRelativeTimeKhmer, stripHtml } from "@/lib/utils";
+import {
+  formatDate,
+  getRelativeTimeKhmer,
+  stripHtml,
+  buildPostUrl,
+  parseIdSlug,
+} from "@/lib/utils";
 
 // ─── ISR: cache article pages for 2 minutes ──────────────────────────────────
 
 export const revalidate = 120;
 
-// ─── generateMetadata — shares same fetch cache with page ─────────────────────
+// ─── Resolve post from route param (handles both old and new formats) ─────────
+
+async function resolvePost(
+  rawParam: string
+): Promise<{ post: WPPost | null }> {
+  const parsed = parseIdSlug(rawParam);
+
+  if (parsed) {
+    // ID-based format: /post/{id} or /post/{id}-{slug}
+    // Fetch by ID — no redirect needed; proxy.ts handles URL cleanup at HTTP level
+    const post = await getPostById(parsed.id);
+    return { post };
+  }
+
+  // Old format: /post/{slug} — look up by slug, redirect to id-slug URL
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(rawParam);
+  } catch {
+    decoded = rawParam;
+  }
+
+  const post = await getPostBySlug(decoded);
+  return { post };
+}
+
+// ─── generateMetadata ─────────────────────────────────────────────────────────
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ idSlug: string }>;
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const normalizedSlug = safeDecodeSlug(slug);
-  const post = await getPostBySlug(normalizedSlug);
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { idSlug } = await params;
+  const { post } = await resolvePost(idSlug);
 
   if (!post) {
     return { title: "Post Not Found — VD7 News" };
@@ -35,15 +68,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = stripHtml(post.title.rendered);
   const description = stripHtml(post.excerpt?.rendered ?? "").slice(0, 160);
   const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
+  const siteUrl = getRequiredSiteUrl();
+  const canonicalUrl = `${siteUrl}${buildPostUrl(post.id, post.slug)}`;
 
   return {
     title: `${title} — VD7 News`,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,
       type: "article",
       publishedTime: post.date,
+      url: canonicalUrl,
       ...(image && { images: [{ url: image }] }),
     },
     twitter: {
@@ -58,11 +97,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // ─── Page Entry ───────────────────────────────────────────────────────────────
 
 export default async function PostDetailPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { idSlug } = await params;
 
   return (
     <Suspense fallback={<PostSkeleton />}>
-      <PostContent slug={slug} />
+      <PostContent idSlug={idSlug} />
     </Suspense>
   );
 }
@@ -86,7 +125,10 @@ function PostSkeleton() {
                 <div className="mt-4 h-4 w-40 skeleton-shimmer rounded" />
                 <div className="mt-6 space-y-3">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-4 w-full skeleton-shimmer rounded" />
+                    <div
+                      key={i}
+                      className="h-4 w-full skeleton-shimmer rounded"
+                    />
                   ))}
                 </div>
               </div>
@@ -101,19 +143,18 @@ function PostSkeleton() {
 
 // ─── Main Content ─────────────────────────────────────────────────────────────
 
-async function PostContent({ slug }: { slug: string }) {
-  const normalizedSlug = safeDecodeSlug(slug);
-
-  // This fetch is DEDUPLICATED by Next.js — same URL as generateMetadata, hits cache
-  const post = (await getPostBySlug(normalizedSlug)) as WPPost | null;
+async function PostContent({ idSlug }: { idSlug: string }) {
+  const { post } = await resolvePost(idSlug);
 
   if (!post) notFound();
 
-  const currentUrl = getCurrentPostUrl(post.slug);
+  const currentUrl = getCurrentPostUrl(post);
   const featuredImage = getPostImage(post);
   const category = getPrimaryCategory(post);
   const postTerms = getPostTerms(post);
-  const isRealEstatePost = postTerms.some((term) => term.slug === "real-estate");
+  const isRealEstatePost = postTerms.some(
+    (term) => term.slug === "real-estate"
+  );
 
   return (
     <div className="min-h-screen bg-[#0a0f1c] text-white">
@@ -122,8 +163,12 @@ async function PostContent({ slug }: { slug: string }) {
           <aside className="hidden xl:block" />
 
           <main>
-            {/* Ads load independently — don't block article rendering */}
-            <Suspense fallback={<div className="mb-6 h-12 w-full skeleton-shimmer rounded-2xl" />}>
+            {/* Ads load independently */}
+            <Suspense
+              fallback={
+                <div className="mb-6 h-12 w-full skeleton-shimmer rounded-2xl" />
+              }
+            >
               <ArticleTopAds />
             </Suspense>
 
@@ -158,12 +203,16 @@ async function PostContent({ slug }: { slug: string }) {
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/60 sm:text-sm">
                   <span>
-                    {getRelativeTimeKhmer(post.date)} — {formatDate(post.date)}
+                    {getRelativeTimeKhmer(post.date)} —{" "}
+                    {formatDate(post.date)}
                   </span>
                 </div>
 
                 <div className="mt-4 border-t border-white/10 pt-4">
-                  <ShareButtons title={post.title.rendered} url={currentUrl} />
+                  <ShareButtons
+                    title={post.title.rendered}
+                    url={currentUrl}
+                  />
                 </div>
 
                 <ArticleContentWithLightbox html={post.content.rendered} />
@@ -175,10 +224,16 @@ async function PostContent({ slug }: { slug: string }) {
                         ទំនាក់ទំនងទិញលក់
                       </p>
                       <div className="relative z-20 flex items-center justify-center gap-3">
-                        <ContactIconButton href="https://t.me/Insarun" label="Telegram">
+                        <ContactIconButton
+                          href="https://t.me/Insarun"
+                          label="Telegram"
+                        >
                           <TelegramAppIcon />
                         </ContactIconButton>
-                        <ContactIconButton href="https://m.me/joun.sarun" label="Messenger">
+                        <ContactIconButton
+                          href="https://m.me/joun.sarun"
+                          label="Messenger"
+                        >
                           <MessengerAppIcon />
                         </ContactIconButton>
                       </div>
@@ -220,8 +275,15 @@ async function PostContent({ slug }: { slug: string }) {
             </article>
 
             {/* Related sections stream independently */}
-            <Suspense fallback={<div className="mt-8 h-40 skeleton-shimmer rounded-2xl" />}>
-              <PostRelatedSections slug={normalizedSlug} currentPostId={post.id} />
+            <Suspense
+              fallback={
+                <div className="mt-8 h-40 skeleton-shimmer rounded-2xl" />
+              }
+            >
+              <PostRelatedSections
+                slug={post.slug}
+                currentPostId={post.id}
+              />
             </Suspense>
           </main>
 
@@ -236,26 +298,24 @@ async function PostContent({ slug }: { slug: string }) {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function safeDecodeSlug(value: string) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
 function getRequiredSiteUrl() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "";
-  if (!siteUrl) throw new Error("Missing NEXT_PUBLIC_SITE_URL (or SITE_URL) environment variable.");
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "";
+  if (!siteUrl)
+    throw new Error(
+      "Missing NEXT_PUBLIC_SITE_URL (or SITE_URL) environment variable."
+    );
   return siteUrl.replace(/\/$/, "");
 }
 
-function getCurrentPostUrl(slug: string) {
-  return `${getRequiredSiteUrl()}/post/${slug}`;
+function getCurrentPostUrl(post: WPPost) {
+  return `${getRequiredSiteUrl()}${buildPostUrl(post.id, post.slug)}`;
 }
 
 function getPostImage(post: WPPost) {
-  return post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "/placeholder.jpg";
+  return (
+    post._embedded?.["wp:featuredmedia"]?.[0]?.source_url || "/placeholder.jpg"
+  );
 }
 
 function getPostTerms(post: WPPost) {
@@ -299,7 +359,14 @@ function TelegramAppIcon(): React.JSX.Element {
           <stop offset="100%" stopColor="#007DBB" />
         </linearGradient>
       </defs>
-      <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#telegramBg)" />
+      <rect
+        x="2"
+        y="2"
+        width="60"
+        height="60"
+        rx="18"
+        fill="url(#telegramBg)"
+      />
       <path
         fill="#fff"
         d="M47.3 18.9 14.7 31.5c-1.7.7-1.7 1.7-.3 2.1l8.3 2.6 3.2 10c.4 1.1.2 1.5 1.4 1.5.9 0 1.3-.4 1.8-.9l4.5-4.3 9.4 6.9c1.7 1 3 .5 3.4-1.6l5.5-26.1c.6-2.5-.9-3.7-2.9-2.8Zm-4.2 6.2L28.3 38.5l-.6 6.2-.2-.2-3.1-9.6 18.7-11.8c.8-.5 1.5.2.9.7Z"
@@ -318,7 +385,14 @@ function MessengerAppIcon(): React.JSX.Element {
           <stop offset="100%" stopColor="#A033FF" />
         </linearGradient>
       </defs>
-      <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#messengerBg)" />
+      <rect
+        x="2"
+        y="2"
+        width="60"
+        height="60"
+        rx="18"
+        fill="url(#messengerBg)"
+      />
       <path
         fill="#fff"
         d="M32 15C22.3 15 14.5 22.2 14.5 31.3c0 5.2 2.5 9.8 6.6 12.8V49l6-3.3c1.6.4 3.2.6 4.9.6 9.7 0 17.5-7.2 17.5-16.3S41.7 15 32 15Zm2.1 21.2-4.5-4.8-8.4 4.8 9.3-9.8 4.7 4.8 8.3-4.8-9.4 9.8Z"
