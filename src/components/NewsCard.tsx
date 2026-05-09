@@ -71,7 +71,7 @@ export default function NewsCard({
 
   if (horizontal) {
     return (
-      <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full h-[420px] rounded-2xl md:h-[260px] active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
+      <article className="news-card group overflow-hidden border border-white/5 bg-white/5 transition-all duration-300 w-full h-[420px] rounded-2xl md:h-[260px] active:scale-[0.98] active:border-white/10 hover:border-white/10 hover:bg-white/[0.07]">
         <div className="flex h-full flex-col md:flex-row">
           {image && (
             <Link href={postHref} className="block shrink-0 md:w-40 xl:w-44">
@@ -80,7 +80,7 @@ export default function NewsCard({
                 alt={title}
                 width={600}
                 height={400}
-                className="h-44 md:h-full w-full object-cover transition-all duration-200 group-hover:scale-105 group-active:scale-[1.03]"
+                className="h-44 md:h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] group-active:scale-100"
                 sizes="(max-width: 768px) 100vw, 180px"
               />
             </Link>
@@ -90,7 +90,7 @@ export default function NewsCard({
             {categoryName && <div className="mb-2">{badgeLink}</div>}
 
             <Link href={postHref} className="block">
-              <h3 className="mb-2 line-clamp-2 text-base leading-6 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
+              <h3 className="mb-2 line-clamp-2 text-base leading-snug font-bold text-white transition-colors duration-200 group-hover:text-red-400">
                 {title}
               </h3>
             </Link>
@@ -112,7 +112,7 @@ export default function NewsCard({
 
   if (compact) {
     return (
-      <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full flex h-[360px] flex-col rounded-2xl active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
+      <article className="news-card group overflow-hidden border border-white/5 bg-white/5 transition-all duration-300 w-full flex h-[360px] flex-col rounded-2xl active:scale-[0.98] active:border-white/10 hover:border-white/10 hover:bg-white/[0.07]">
         <Link href={postHref} className="block shrink-0">
           {image && (
             <div className="overflow-hidden">
@@ -121,7 +121,7 @@ export default function NewsCard({
                 alt={title}
                 width={600}
                 height={400}
-                className="h-40 w-full object-cover transition-all duration-200 group-hover:scale-105 group-active:scale-[1.03]"
+                className="h-40 w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] group-active:scale-100"
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
             </div>
@@ -132,7 +132,7 @@ export default function NewsCard({
           {categoryName && <div className="mb-2">{badgeLink}</div>}
 
           <Link href={postHref} className="block">
-            <h3 className="mb-2 line-clamp-2 text-base leading-6 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
+            <h3 className="mb-2 line-clamp-2 text-base leading-snug font-bold text-white transition-colors duration-200 group-hover:text-red-400">
               {title}
             </h3>
           </Link>
@@ -152,7 +152,7 @@ export default function NewsCard({
   }
 
   return (
-    <article className="news-card group overflow-hidden border border-white/10 bg-white/5 transition-all duration-150 w-full flex h-[400px] flex-col rounded-3xl sm:h-[420px] lg:h-[460px] active:scale-[0.975] active:border-red-500/40 active:bg-white/[0.08] hover:border-red-500/40">
+    <article className="news-card group overflow-hidden border border-white/5 bg-white/5 transition-all duration-300 w-full flex h-[400px] flex-col rounded-3xl sm:h-[420px] lg:h-[460px] active:scale-[0.98] active:border-white/10 hover:border-white/10 hover:bg-white/[0.07]">
       <Link href={postHref} className="block shrink-0">
         {image && (
           <div className="overflow-hidden">
@@ -161,7 +161,7 @@ export default function NewsCard({
               alt={title}
               width={600}
               height={400}
-              className="h-40 sm:h-44 lg:h-52 w-full object-cover transition-all duration-200 group-hover:scale-105 group-active:scale-[1.03]"
+              className="h-40 sm:h-44 lg:h-52 w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] group-active:scale-100"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           </div>
@@ -172,7 +172,7 @@ export default function NewsCard({
         {categoryName && <div className="mb-3">{badgeLink}</div>}
 
         <Link href={postHref} className="block">
-          <h3 className="mb-2 line-clamp-2 text-base leading-6 sm:text-lg sm:leading-7 font-bold text-white transition-all duration-150 group-hover:text-red-400 group-active:text-red-400">
+          <h3 className="mb-2 line-clamp-2 text-base leading-snug sm:text-lg font-bold text-white transition-colors duration-200 group-hover:text-red-400">
             {title}
           </h3>
         </Link>

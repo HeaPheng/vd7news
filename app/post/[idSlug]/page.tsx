@@ -9,6 +9,7 @@ import ScrollButtons from "@/src/components/post/ScrollButtons";
 import ArticleContentWithLightbox from "@/src/components/post/ArticleContentWithLightbox";
 import ArticleTopAds from "@/src/components/post/ArticleTopAds";
 import PostRelatedSections from "@/src/components/post/PostRelatedSections";
+import ReadingProgressBar from "@/src/components/post/ReadingProgressBar";
 import { getPostById, getPostBySlug } from "@/lib/wordpress";
 import type { WPPost } from "@/lib/wordpress";
 import {
@@ -119,9 +120,12 @@ export default async function PostDetailPage({ params }: PageProps) {
   const { idSlug } = await params;
 
   return (
-    <Suspense fallback={<PostSkeleton />}>
-      <PostContent idSlug={idSlug} />
-    </Suspense>
+    <>
+      <ReadingProgressBar />
+      <Suspense fallback={<PostSkeleton />}>
+        <PostContent idSlug={idSlug} />
+      </Suspense>
+    </>
   );
 }
 

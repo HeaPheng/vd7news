@@ -99,9 +99,9 @@ function SectionHeader({
   href?: string;
 }) {
   return (
-    <div className="mb-5 flex items-center gap-4 border-b border-white/10 pb-3">
-      <h2 className="text-xl font-bold text-white">{title}</h2>
-      <div className="h-px flex-1 bg-red-500/40" />
+    <div className="mb-8 flex items-center gap-4 border-b border-white/5 pb-4">
+      <h2 className="text-xl font-bold text-white tracking-wide">{title}</h2>
+      <div className="h-px flex-1 bg-gradient-to-r from-red-500/30 to-transparent" />
       {href && (
         <Link
           href={href}
@@ -126,7 +126,7 @@ function CategoryRow({
   if (!posts.length) return null;
 
   return (
-    <section className="mt-10">
+    <section className="mt-16 lg:mt-20">
       <SectionHeader
         title={title}
         href={categorySlug ? `/category/${categorySlug}` : undefined}

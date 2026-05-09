@@ -57,13 +57,14 @@ h6 {
 
 .article-content {
   overflow: hidden;
-  font-size: 19.5px;
-  line-height: 2;
-  color: rgba(255, 255, 255, 0.88);
+  font-size: 18px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .article-content p {
-  margin: 0 0 22px 0 !important;
+  max-width: 720px;
+  margin: 0 auto 24px auto !important;
 }
 
 .article-content h1,
@@ -72,18 +73,32 @@ h6 {
 .article-content h4,
 .article-content h5,
 .article-content h6 {
-  margin-top: 28px !important;
-  margin-bottom: 16px !important;
-  line-height: 1.4 !important;
+  max-width: 720px;
+  margin: 32px auto 16px auto !important;
+  line-height: 1.35 !important;
 }
 
 .article-content ul,
 .article-content ol {
-  margin: 0 0 22px 22px !important;
+  max-width: 720px;
+  margin: 0 auto 24px auto !important;
+  padding-left: 24px !important;
 }
 
 .article-content li {
   margin-bottom: 10px !important;
+}
+
+.article-content blockquote {
+  max-width: 720px;
+  margin: 32px auto !important;
+  padding: 16px 24px !important;
+  border-left: 4px solid #ef4444;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  font-size: 1.05em;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* stronger spacing around image wrappers */
@@ -93,33 +108,34 @@ h6 {
 .article-content p:has(img) {
   display: block !important;
   width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 0 42px 0 !important;
+  max-width: 860px !important;
+  margin: 40px auto !important;
 }
 
 .article-content .alignleft,
 .article-content .alignright,
 .article-content .aligncenter {
   float: none !important;
-  margin: 0 0 42px 0 !important;
-  text-align: left !important;
+  max-width: 860px !important;
+  margin: 40px auto !important;
+  text-align: center !important;
 }
 
 .article-content img {
   display: block !important;
-  width: 680px !important;
+  width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
   object-fit: contain !important;
-  border-radius: 10px !important;
-  margin: 0 auto 14px auto !important;
+  border-radius: 12px !important;
+  margin: 0 auto 12px auto !important;
   box-shadow: none !important;
 }
 
 .article-content figure img,
 .article-content .wp-block-image img,
 .article-content .wp-caption img {
-  width: 680px !important;
+  width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
   object-fit: contain !important;
@@ -135,8 +151,8 @@ h6 {
 
 @media (max-width: 1024px) {
   .article-content {
-    font-size: 18px;
-    line-height: 1.85;
+    font-size: 17px;
+    line-height: 1.75;
   }
 
   .article-content figure,
@@ -367,11 +383,31 @@ button:active {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 75%
+    rgba(255, 255, 255, 0.02) 25%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 75%
   );
   background-size: 800px 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
+  animation: shimmer 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   border-radius: 8px;
+}
+
+/* =========================
+   ACCESSIBILITY
+   ========================= */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
