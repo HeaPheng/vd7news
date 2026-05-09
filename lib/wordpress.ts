@@ -32,6 +32,12 @@ export type WPTerm = {
 
 export type WPFeaturedMedia = {
   source_url: string;
+  alt_text?: string;
+  mime_type?: string;
+  media_details?: {
+    width?: number;
+    height?: number;
+  };
 };
 
 export type WPAuthor = {

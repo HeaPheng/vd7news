@@ -67,9 +67,26 @@ export async function generateMetadata({
 
   const title = stripHtml(post.title.rendered);
   const description = stripHtml(post.excerpt?.rendered ?? "").slice(0, 160);
-  const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
   const siteUrl = getRequiredSiteUrl();
   const canonicalUrl = `${siteUrl}${buildPostUrl(post.id, post.slug)}`;
+
+  // Extract full image metadata — Facebook needs width + height to show preview
+  const media = post._embedded?.["wp:featuredmedia"]?.[0];
+  const imageUrl = media?.source_url;
+  const imageWidth = media?.media_details?.width ?? 1200;
+  const imageHeight = media?.media_details?.height ?? 630;
+  const imageAlt = media?.alt_text || title;
+  const imageType = media?.mime_type || "image/jpeg";
+
+  const ogImage = imageUrl
+    ? {
+        url: imageUrl,
+        width: imageWidth,
+        height: imageHeight,
+        alt: imageAlt,
+        type: imageType,
+      }
+    : undefined;
 
   return {
     title: `${title} — VD7 News`,
@@ -81,15 +98,17 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
+      siteName: "VD7 News",
+      locale: "km_KH",
       publishedTime: post.date,
       url: canonicalUrl,
-      ...(image && { images: [{ url: image }] }),
+      ...(ogImage && { images: [ogImage] }),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(image && { images: [image] }),
+      ...(imageUrl && { images: [imageUrl] }),
     },
   };
 }
