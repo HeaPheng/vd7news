@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Suspense } from "react";
 import Header from "../src/components/Header";
 import Footer from "../src/components/Footer";
 import PostPopupAd from "../src/components/PostPopupAd";
@@ -31,7 +32,11 @@ export default function RootLayout({
       <body
         className={`${hanuman.variable} ${roboto.variable} bg-[#060b16] text-white`}
       >
-        <Header />
+        <Suspense fallback={
+          <nav className="h-16 border-b border-white/10 bg-[#060b16]" />
+        }>
+          <Header />
+        </Suspense>
 
         {/* ✅ GLOBAL POPUP (ALL PAGES) */}
         <PostPopupAd />

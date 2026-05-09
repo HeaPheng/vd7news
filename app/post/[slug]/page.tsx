@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import ShareButtons from "@/src/components/post/ShareButtons";
 import ScrollButtons from "@/src/components/post/ScrollButtons";
@@ -10,13 +11,51 @@ import ArticleTopAds from "@/src/components/post/ArticleTopAds";
 import PostRelatedSections from "@/src/components/post/PostRelatedSections";
 import { getPostBySlug } from "@/lib/wordpress";
 import type { WPPost } from "@/lib/wordpress";
-import { formatDate, getRelativeTimeKhmer } from "@/lib/utils";
+import { formatDate, getRelativeTimeKhmer, stripHtml } from "@/lib/utils";
 
-// ─── Page Entry ───────────────────────────────────────────────────────────────
+// ─── ISR: cache article pages for 2 minutes ──────────────────────────────────
+
+export const revalidate = 120;
+
+// ─── generateMetadata — shares same fetch cache with page ─────────────────────
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const normalizedSlug = safeDecodeSlug(slug);
+  const post = await getPostBySlug(normalizedSlug);
+
+  if (!post) {
+    return { title: "Post Not Found — VD7 News" };
+  }
+
+  const title = stripHtml(post.title.rendered);
+  const description = stripHtml(post.excerpt?.rendered ?? "").slice(0, 160);
+  const image = post._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
+
+  return {
+    title: `${title} — VD7 News`,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      publishedTime: post.date,
+      ...(image && { images: [{ url: image }] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(image && { images: [image] }),
+    },
+  };
+}
+
+// ─── Page Entry ───────────────────────────────────────────────────────────────
 
 export default async function PostDetailPage({ params }: PageProps) {
   const { slug } = await params;
@@ -37,17 +76,17 @@ function PostSkeleton() {
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[60px_minmax(0,1120px)_320px] 2xl:grid-cols-[80px_minmax(0,1180px)_320px]">
           <aside className="hidden xl:block" />
           <main>
-            <div className="mb-6 h-12 w-full animate-pulse rounded-2xl bg-white/5" />
+            <div className="mb-6 h-12 w-full skeleton-shimmer rounded-2xl" />
             <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#10182b] shadow-2xl">
-              <div className="h-[260px] w-full animate-pulse bg-white/5 sm:h-[340px] lg:h-[430px]" />
+              <div className="h-[260px] w-full skeleton-shimmer sm:h-[340px] lg:h-[430px]" />
               <div className="mx-auto max-w-[980px] px-3 pb-10 pt-6 sm:px-8 lg:px-10">
-                <div className="h-6 w-24 animate-pulse rounded-full bg-white/5" />
-                <div className="mt-4 h-10 w-3/4 animate-pulse rounded-lg bg-white/5" />
-                <div className="mt-2 h-10 w-1/2 animate-pulse rounded-lg bg-white/5" />
-                <div className="mt-4 h-4 w-40 animate-pulse rounded bg-white/5" />
+                <div className="h-6 w-24 skeleton-shimmer rounded-full" />
+                <div className="mt-4 h-10 w-3/4 skeleton-shimmer rounded-lg" />
+                <div className="mt-2 h-10 w-1/2 skeleton-shimmer rounded-lg" />
+                <div className="mt-4 h-4 w-40 skeleton-shimmer rounded" />
                 <div className="mt-6 space-y-3">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-4 w-full animate-pulse rounded bg-white/5" />
+                    <div key={i} className="h-4 w-full skeleton-shimmer rounded" />
                   ))}
                 </div>
               </div>
@@ -64,6 +103,8 @@ function PostSkeleton() {
 
 async function PostContent({ slug }: { slug: string }) {
   const normalizedSlug = safeDecodeSlug(slug);
+
+  // This fetch is DEDUPLICATED by Next.js — same URL as generateMetadata, hits cache
   const post = (await getPostBySlug(normalizedSlug)) as WPPost | null;
 
   if (!post) notFound();
@@ -81,7 +122,10 @@ async function PostContent({ slug }: { slug: string }) {
           <aside className="hidden xl:block" />
 
           <main>
-            <ArticleTopAds />
+            {/* Ads load independently — don't block article rendering */}
+            <Suspense fallback={<div className="mb-6 h-12 w-full skeleton-shimmer rounded-2xl" />}>
+              <ArticleTopAds />
+            </Suspense>
 
             <article className="overflow-hidden rounded-[28px] border border-white/10 bg-[#10182b] shadow-2xl">
               {/* Hero Image */}
@@ -175,6 +219,7 @@ async function PostContent({ slug }: { slug: string }) {
               </div>
             </article>
 
+            {/* Related sections stream independently */}
             <Suspense fallback={<div className="mt-8 h-40 skeleton-shimmer rounded-2xl" />}>
               <PostRelatedSections slug={normalizedSlug} currentPostId={post.id} />
             </Suspense>
