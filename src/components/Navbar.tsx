@@ -73,6 +73,7 @@ export default function Navbar({ menuItems }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [showNavbar, setShowNavbar] = useState(true);
 
   const searchRef = useRef<HTMLInputElement | null>(null);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
@@ -115,6 +116,30 @@ export default function Navbar({ menuItems }: NavbarProps) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [searchOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let lastScrollY = window.scrollY;
+
+    const controlNavbar = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // Hide on scroll down if menus aren't open
+        if (!mobileOpen && !searchOpen) {
+          setShowNavbar(false);
+        }
+      } else {
+        // Show on scroll up
+        setShowNavbar(true);
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", controlNavbar, { passive: true });
+    return () => window.removeEventListener("scroll", controlNavbar);
+  }, [mobileOpen, searchOpen]);
 
   useEffect(() => {
     const el = dropdownRef.current;
@@ -196,7 +221,11 @@ export default function Navbar({ menuItems }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b1220]/95 backdrop-blur">
+    <header 
+      className={`sticky top-0 z-50 border-b border-white/10 bg-[#0b1220]/95 backdrop-blur transition-transform duration-300 ease-in-out ${
+        showNavbar ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
       <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Desktop Navbar */}
         <div className="hidden h-16 items-center justify-between gap-4 xl:flex">
