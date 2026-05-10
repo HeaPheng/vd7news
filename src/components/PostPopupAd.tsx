@@ -147,21 +147,19 @@ export default function PostPopupAd() {
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center px-4 transition-all duration-300 ${
-        visible
+      className={`fixed inset-0 z-[9999] flex items-center justify-center px-4 transition-all duration-300 ${visible
           ? "pointer-events-auto bg-black/60 opacity-100"
           : "pointer-events-none bg-black/0 opacity-0"
-      }`}
+        }`}
       aria-hidden={!visible}
       inert={!visible || undefined}
       onClick={closePopup}
     >
       <div
-        className={`relative w-full max-w-[400px] sm:max-w-[460px] transition-all duration-500 ${
-          visible
+        className={`relative w-full max-w-[400px] sm:max-w-[460px] transition-all duration-500 ${visible
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-6 scale-95 opacity-0"
-        }`}
+          }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
@@ -200,17 +198,6 @@ export default function PostPopupAd() {
 
             <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
           </Link>
-
-          <div className="pointer-events-none absolute inset-x-0 bottom-5 z-20 flex justify-center px-4">
-            <Link
-              href={ad.targetUrl || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pointer-events-auto inline-flex min-w-[150px] items-center justify-center rounded-full bg-red-600/80 px-6 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-red-500 active:scale-95 active:bg-red-500"
-            >
-              មើលបន្ថែម
-            </Link>
-          </div>
         </div>
       </div>
     </div>
