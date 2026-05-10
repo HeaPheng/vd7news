@@ -76,6 +76,8 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
   const searchRef = useRef<HTMLInputElement | null>(null);
   const searchBoxRef = useRef<HTMLDivElement | null>(null);
+  const mobileSearchRef = useRef<HTMLInputElement | null>(null);
+  const mobileSearchBoxRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const router = useRouter();
@@ -89,18 +91,21 @@ export default function Navbar({ menuItems }: NavbarProps) {
   }, [pathname]);
 
   useEffect(() => {
-    if (searchOpen && searchRef.current) {
-      searchRef.current.focus();
+    if (searchOpen) {
+      searchRef.current?.focus();
+      mobileSearchRef.current?.focus();
     }
   }, [searchOpen]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        searchOpen &&
-        searchBoxRef.current &&
-        !searchBoxRef.current.contains(event.target as Node)
-      ) {
+      if (!searchOpen) return;
+      
+      const target = event.target as Node;
+      const clickedOutsideDesktop = searchBoxRef.current && !searchBoxRef.current.contains(target);
+      const clickedOutsideMobile = mobileSearchBoxRef.current && !mobileSearchBoxRef.current.contains(target);
+      
+      if (clickedOutsideDesktop && clickedOutsideMobile) {
         setSearchOpen(false);
       }
     }
@@ -273,69 +278,105 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
         {/* Mobile Navbar */}
         <div className="relative flex h-[80px] items-center justify-between xl:hidden">
-          {/* LEFT — text */}
-          <div className="min-w-0 max-w-[42%]">
-            <PressableNavLink
-              href="/"
-              className="block truncate leading-none hover:opacity-90"
-              onClick={() => setMobileOpen(false)}
+          {/* LEFT — hamburger / close */}
+          <div className="flex shrink-0 items-center z-10">
+            <button
+              type="button"
+              onClick={() => setMobileOpen((prev) => !prev)}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white transition-all duration-300 hover:border-red-500/40 hover:text-red-400 active:scale-95"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+              style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
             >
-              <BrandText mobile />
-            </PressableNavLink>
+              <div className="relative flex h-5 w-5 flex-col items-center justify-center gap-[5px] overflow-hidden">
+                <span
+                  className={`h-[2px] w-full rounded-full bg-current transition-all duration-300 ease-out ${
+                    mobileOpen ? "translate-y-[7px] rotate-45" : ""
+                  }`}
+                />
+                <span
+                  className={`h-[2px] w-full rounded-full bg-current transition-all duration-300 ease-out ${
+                    mobileOpen ? "opacity-0 translate-x-4" : ""
+                  }`}
+                />
+                <span
+                  className={`h-[2px] w-full rounded-full bg-current transition-all duration-300 ease-out ${
+                    mobileOpen ? "-translate-y-[7px] -rotate-45" : ""
+                  }`}
+                />
+              </div>
+            </button>
           </div>
 
           {/* CENTER — logo */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex flex-1 items-center justify-center z-0 transition-all duration-300">
             <PressableNavLink
               href="/"
-              className="pointer-events-auto flex items-center justify-center hover:opacity-90"
+              className="flex items-center justify-center hover:opacity-90"
               onClick={() => setMobileOpen(false)}
             >
               <Image
-                src="/images/logo/logo.png"
+                src="/favicon.ico"
                 alt="VD7"
-                width={72}
-                height={72}
-                className="h-[72px] w-[72px] object-contain"
+                width={60}
+                height={60}
+                className="h-[60px] w-[60px] object-contain rounded-xl shadow-sm transition-all duration-300"
                 priority
               />
             </PressableNavLink>
           </div>
 
-          {/* RIGHT — hamburger / close */}
-          <div className="ml-auto">
-            <button
-              type="button"
-              onClick={() => setMobileOpen((prev) => !prev)}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:border-red-500/40 hover:text-red-400 active:scale-95 active:border-red-500/40 active:text-red-400"
-              aria-label="Toggle menu"
-              aria-expanded={mobileOpen}
-              style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-              >
-                {mobileOpen ? (
-                  <>
-                    <path d="M6 6l12 12" />
-                    <path d="M18 6L6 18" />
-                  </>
-                ) : (
-                  <>
-                    <path d="M4 7h16" />
-                    <path d="M4 12h16" />
-                    <path d="M4 17h16" />
-                  </>
-                )}
-              </svg>
-            </button>
+          {/* RIGHT — search */}
+          <div className="flex shrink-0 items-center z-10">
+            <form onSubmit={handleSearchSubmit}>
+              <div ref={mobileSearchBoxRef} className="flex items-center">
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-out ${
+                    searchOpen ? "mr-2 w-[160px] sm:w-[200px] opacity-100" : "w-0 opacity-0"
+                  }`}
+                >
+                  <input
+                    ref={mobileSearchRef}
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setSearchOpen(false);
+                    }}
+                    placeholder="Search..."
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-gray-400 focus:border-red-500/50"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen((prev) => !prev)}
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-gray-200 transition-all duration-300 hover:border-red-500/40 hover:text-red-400 active:scale-95"
+                  aria-label="Toggle search"
+                  style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={`h-5 w-5 transition-transform duration-300 ${searchOpen ? 'rotate-90 scale-110' : 'rotate-0 scale-100'}`}
+                  >
+                    {searchOpen ? (
+                      <>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </>
+                    ) : (
+                      <>
+                        <circle cx="11" cy="11" r="7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m20 20-3.5-3.5" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -347,41 +388,10 @@ export default function Navbar({ menuItems }: NavbarProps) {
             height: 0,
             opacity: 0,
             transition:
-              "height 320ms cubic-bezier(0.4, 0, 0.2, 1), opacity 280ms ease",
+              "height 400ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms ease",
           }}
         >
           <div className="border-t border-white/10 py-4">
-            <form onSubmit={handleSearchSubmit} className="mb-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search news..."
-                  className="h-11 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-gray-400 focus:border-red-500/50"
-                />
-
-                <button
-                  type="submit"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-200 transition-all duration-150 hover:border-red-500/40 hover:text-red-400 active:scale-95 active:border-red-500/40 active:text-red-400"
-                  aria-label="Search"
-                  style={{ WebkitTapHighlightColor: "rgba(255,255,255,0.14)" }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="h-5 w-5"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.5-3.5" />
-                  </svg>
-                </button>
-              </div>
-            </form>
-
             <nav className="flex flex-col gap-2">
               {menuItems.map((item, index) => (
                 <PressableNavLink
