@@ -195,8 +195,6 @@ export default function PostPopupAd() {
               alt={ad.title}
               className="block max-h-[82vh] w-full object-cover transition-transform duration-300 group-hover:scale-[1.01] group-active:scale-[0.99]"
             />
-
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
           </Link>
         </div>
       </div>
