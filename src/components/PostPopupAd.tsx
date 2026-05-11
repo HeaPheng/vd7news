@@ -17,7 +17,7 @@ const wpSiteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   "";
 
-const POPUP_REPEAT_MS = 2 * 60 * 1000; // 2 minutes
+const POPUP_REPEAT_MS = 3 * 60 * 1000; // 3 minutes
 
 function buildWpSiteUrl(path: string): string {
   const base = wpSiteUrl.replace(/\/$/, "");
