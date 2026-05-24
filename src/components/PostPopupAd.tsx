@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 type PopupAd = {
@@ -40,6 +40,26 @@ export default function PostPopupAd() {
     setMounted(true);
   }, []);
 
+  // Re-fetch a random ad from the API (cache-busted so WordPress returns a fresh random pick)
+  const fetchNewAd = useCallback(async (): Promise<PopupAd | null> => {
+    try {
+      const res = await fetch(
+        buildWpSiteUrl("/wp-json/vd7/v1/popup-ad"),
+        { cache: "no-store" }
+      );
+
+      if (!res.ok) return null;
+
+      const data: PopupAd | null = await res.json();
+      if (!data || !data.image) return null;
+
+      return data;
+    } catch (error) {
+      console.error("Popup ad fetch error:", error);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!wpSiteUrl) {
       console.error(
@@ -61,38 +81,24 @@ export default function PostPopupAd() {
     isClosingRef.current = false;
     setVisible(false);
 
-    const fetchAd = async () => {
-      try {
-        const res = await fetch(
-          buildWpSiteUrl("/wp-json/vd7/v1/popup-ad"),
-        );
+    const initAd = async () => {
+      const data = await fetchNewAd();
 
-        if (!res.ok) {
-          setAd(null);
-          return;
-        }
-
-        const data: PopupAd | null = await res.json();
-
-        if (!data || !data.image) {
-          setAd(null);
-          return;
-        }
-
-        setAd(data);
-
-        firstShowTimerRef.current = setTimeout(() => {
-          if (!isClosingRef.current) {
-            setVisible(true);
-          }
-        }, (data.delaySeconds || 4) * 1000);
-      } catch (error) {
-        console.error("Popup ad fetch error:", error);
+      if (!data) {
         setAd(null);
+        return;
       }
+
+      setAd(data);
+
+      firstShowTimerRef.current = setTimeout(() => {
+        if (!isClosingRef.current) {
+          setVisible(true);
+        }
+      }, (data.delaySeconds || 4) * 1000);
     };
 
-    fetchAd();
+    initAd();
 
     return () => {
       if (firstShowTimerRef.current) {
@@ -105,27 +111,32 @@ export default function PostPopupAd() {
         repeatTimerRef.current = null;
       }
     };
-  }, [pathname]);
+  }, [pathname, fetchNewAd]);
 
-  const scheduleNextPopup = () => {
+  const scheduleNextPopup = useCallback(() => {
     if (repeatTimerRef.current) {
       clearTimeout(repeatTimerRef.current);
       repeatTimerRef.current = null;
     }
 
-    repeatTimerRef.current = setTimeout(() => {
+    repeatTimerRef.current = setTimeout(async () => {
+      // Re-fetch a new random ad from the API for each repeat cycle
+      const newAd = await fetchNewAd();
+      if (newAd) {
+        setAd(newAd);
+      }
       isClosingRef.current = false;
       setVisible(true);
     }, POPUP_REPEAT_MS);
-  };
+  }, [fetchNewAd]);
 
-  const closePopup = () => {
+  const closePopup = useCallback(() => {
     if (isClosingRef.current) return;
 
     isClosingRef.current = true;
     setVisible(false);
     scheduleNextPopup();
-  };
+  }, [scheduleNextPopup]);
 
   useEffect(() => {
     if (!visible) return;
