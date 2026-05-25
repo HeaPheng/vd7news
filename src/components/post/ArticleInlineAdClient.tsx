@@ -51,21 +51,38 @@ export default function ArticleInlineAdClient({ ad }: Props) {
       if (!sentinelRef.current) return;
 
       const rect = sentinelRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
+      const vh = window.innerHeight;
 
-      // Start revealing when sentinel top enters the bottom 20% of viewport
-      // Fully revealed when sentinel top reaches 55% from top of viewport
-      const startPoint = viewportHeight * 0.9;
-      const endPoint = viewportHeight * 0.45;
+      // ── Entry zone (bottom of viewport) ──
+      // Reveals as the ad scrolls up from the bottom into view
+      const entryStart = vh * 0.9;   // start revealing here
+      const entryEnd = vh * 0.5;     // fully revealed here
 
-      if (rect.top >= startPoint) {
-        setProgress(0);
-      } else if (rect.top <= endPoint) {
-        setProgress(1);
+      // ── Exit zone (top of viewport) ──
+      // Collapses as the ad scrolls up past the top
+      const exitStart = vh * 0.35;   // start collapsing here
+      const exitEnd = vh * 0.05;     // fully collapsed here
+
+      let p: number;
+
+      if (rect.top >= entryStart) {
+        // Below viewport — hidden
+        p = 0;
+      } else if (rect.top > entryEnd) {
+        // Entering from bottom — revealing
+        p = (entryStart - rect.top) / (entryStart - entryEnd);
+      } else if (rect.top > exitStart) {
+        // Middle zone — fully visible
+        p = 1;
+      } else if (rect.top > exitEnd) {
+        // Exiting from top — collapsing
+        p = (rect.top - exitEnd) / (exitStart - exitEnd);
       } else {
-        const p = (startPoint - rect.top) / (startPoint - endPoint);
-        setProgress(Math.max(0, Math.min(1, p)));
+        // Above viewport — hidden
+        p = 0;
       }
+
+      setProgress(Math.max(0, Math.min(1, p)));
     });
   }, []);
 
