@@ -141,6 +141,11 @@ export default function PostPopupAd() {
   useEffect(() => {
     if (!visible) return;
 
+    // Auto-close popup after 5 seconds
+    const autoCloseTimer = setTimeout(() => {
+      closePopup();
+    }, 5000);
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         closePopup();
@@ -150,9 +155,10 @@ export default function PostPopupAd() {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      clearTimeout(autoCloseTimer);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [visible]);
+  }, [visible, closePopup]);
 
   if (!mounted || !ad) return null;
 

@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import ShareButtons from "@/src/components/post/ShareButtons";
 import ScrollButtons from "@/src/components/post/ScrollButtons";
 import ArticleContentWithLightbox from "@/src/components/post/ArticleContentWithLightbox";
+import type { InlineAdData } from "@/src/components/post/ArticleInlineAdClient";
 import ArticleTopAds from "@/src/components/post/ArticleTopAds";
 import PostRelatedSections from "@/src/components/post/PostRelatedSections";
 import ReadingProgressBar from "@/src/components/post/ReadingProgressBar";
@@ -164,10 +165,42 @@ function PostSkeleton() {
   );
 }
 
+// ─── Inline Ad Fetcher ────────────────────────────────────────────────────────
+
+async function getInlineAd(): Promise<InlineAdData | null> {
+  const wpUrl = getWpSiteUrl();
+  if (!wpUrl) return null;
+
+  try {
+    const res = await fetch(
+      `${wpUrl}/wp-json/vd7/v1/ads?placement=article_inline`,
+      { next: { revalidate: 120 } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.item || null;
+  } catch {
+    return null;
+  }
+}
+
+function getWpSiteUrl(): string {
+  const url =
+    process.env.NEXT_PUBLIC_WORDPRESS_SITE_URL ||
+    process.env.WORDPRESS_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    "";
+  return url.replace(/\/$/, "");
+}
+
 // ─── Main Content ─────────────────────────────────────────────────────────────
 
 async function PostContent({ idSlug }: { idSlug: string }) {
-  const { post } = await resolvePost(idSlug);
+  const [{ post }, inlineAd] = await Promise.all([
+    resolvePost(idSlug),
+    getInlineAd(),
+  ]);
 
   if (!post) notFound();
 
@@ -238,7 +271,7 @@ async function PostContent({ idSlug }: { idSlug: string }) {
                   />
                 </div>
 
-                <ArticleContentWithLightbox html={post.content.rendered} />
+                <ArticleContentWithLightbox html={post.content.rendered} inlineAd={inlineAd} />
 
                 {isRealEstatePost && (
                   <div className="mt-8 border-t border-white/10 pt-6">

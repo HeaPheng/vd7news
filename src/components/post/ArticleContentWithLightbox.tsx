@@ -1,12 +1,38 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ArticleInlineAdClient, {
+    InlineAdData,
+} from "./ArticleInlineAdClient";
 
 type Props = {
     html: string;
+    inlineAd?: InlineAdData | null;
 };
 
-export default function ArticleContentWithLightbox({ html }: Props) {
+/**
+ * Split HTML content after the Nth closing </p> tag.
+ * Returns [beforeContent, afterContent].
+ */
+function splitAfterNthParagraph(
+    html: string,
+    n: number
+): [string, string] {
+    let count = 0;
+    const regex = /<\/p>/gi;
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+        count++;
+        if (count === n) {
+            const splitIndex = match.index + match[0].length;
+            return [html.slice(0, splitIndex), html.slice(splitIndex)];
+        }
+    }
+    // If fewer than N paragraphs, return full content as first part
+    return [html, ""];
+}
+
+export default function ArticleContentWithLightbox({ html, inlineAd }: Props) {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
     const imageSources = useMemo(() => {
@@ -86,11 +112,13 @@ export default function ArticleContentWithLightbox({ html }: Props) {
         );
     };
 
-    return (
-        <>
-            <div
-                onClick={handleContentClick}
-                className="
+    // Split content for inline ad injection
+    const hasInlineAd = inlineAd && inlineAd.image;
+    const [contentBefore, contentAfter] = hasInlineAd
+        ? splitAfterNthParagraph(html, 2)
+        : [html, ""];
+
+    const articleClasses = `
           article-content mt-8 max-w-none
           prose prose-invert
           prose-p:text-white/85
@@ -101,9 +129,31 @@ export default function ArticleContentWithLightbox({ html }: Props) {
           prose-img:cursor-zoom-in
           prose-img:rounded-2xl
           prose-img:shadow-lg
-        "
-                dangerouslySetInnerHTML={{ __html: html }}
-            />
+        `;
+
+    return (
+        <>
+            {hasInlineAd && contentAfter ? (
+                <>
+                    <div
+                        onClick={handleContentClick}
+                        className={articleClasses}
+                        dangerouslySetInnerHTML={{ __html: contentBefore }}
+                    />
+                    <ArticleInlineAdClient ad={inlineAd} />
+                    <div
+                        onClick={handleContentClick}
+                        className={`${articleClasses} !mt-0`}
+                        dangerouslySetInnerHTML={{ __html: contentAfter }}
+                    />
+                </>
+            ) : (
+                <div
+                    onClick={handleContentClick}
+                    className={articleClasses}
+                    dangerouslySetInnerHTML={{ __html: html }}
+                />
+            )}
 
             {selectedImage && (
                 <div
