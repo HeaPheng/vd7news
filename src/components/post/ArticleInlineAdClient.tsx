@@ -17,30 +17,8 @@ type Props = {
 
 export default function ArticleInlineAdClient({ ad }: Props) {
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
   const rafRef = useRef<number | null>(null);
-
-  // Measure the full height of the ad content
-  useEffect(() => {
-    if (!contentRef.current) return;
-
-    const measure = () => {
-      if (contentRef.current) {
-        setContentHeight(contentRef.current.scrollHeight);
-      }
-    };
-
-    measure();
-
-    // Re-measure when image loads
-    const img = contentRef.current.querySelector("img");
-    if (img) {
-      img.addEventListener("load", measure);
-      return () => img.removeEventListener("load", measure);
-    }
-  }, [ad.image]);
 
   const handleScroll = useCallback(() => {
     if (rafRef.current) return;
@@ -54,19 +32,16 @@ export default function ArticleInlineAdClient({ ad }: Props) {
       const vh = window.innerHeight;
 
       // ── Entry zone (bottom of viewport) ──
-      // Reveals as the ad scrolls up from the bottom into view
-      const entryStart = vh * 0.9;   // start revealing here
-      const entryEnd = vh * 0.5;     // fully revealed here
+      const entryStart = vh * 0.95;
+      const entryEnd = vh * 0.55;
 
       // ── Exit zone (top of viewport) ──
-      // Collapses as the ad scrolls up past the top
-      const exitStart = vh * 0.35;   // start collapsing here
-      const exitEnd = vh * 0.05;     // fully collapsed here
+      const exitStart = vh * 0.3;
+      const exitEnd = vh * -0.1;
 
       let p: number;
 
       if (rect.top >= entryStart) {
-        // Below viewport — hidden
         p = 0;
       } else if (rect.top > entryEnd) {
         // Entering from bottom — revealing
@@ -78,7 +53,6 @@ export default function ArticleInlineAdClient({ ad }: Props) {
         // Exiting from top — collapsing
         p = (rect.top - exitEnd) / (exitStart - exitEnd);
       } else {
-        // Above viewport — hidden
         p = 0;
       }
 
@@ -88,7 +62,7 @@ export default function ArticleInlineAdClient({ ad }: Props) {
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    handleScroll();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -98,37 +72,34 @@ export default function ArticleInlineAdClient({ ad }: Props) {
 
   if (!ad.image) return null;
 
-  const currentMaxHeight = contentHeight > 0 ? progress * contentHeight : 0;
-  const eased = progress * progress * (3 - 2 * progress); // smoothstep
+  // Smoothstep easing for natural feel
+  const eased = progress * progress * (3 - 2 * progress);
+
+  // clip-path reveals from center outward — no layout shift
+  const clipAmount = (1 - eased) * 50;
 
   return (
-    <div className="my-6 -mx-3 sm:-mx-8 lg:-mx-10 md:hidden">
-      {/* Sentinel — marks the scroll trigger position */}
-      <div ref={sentinelRef} aria-hidden="true" />
-
-      {/* Reveal container — clips content based on scroll progress */}
+    <div ref={sentinelRef} className="my-6 -mx-3 sm:-mx-8 lg:-mx-10 md:hidden">
       <div
         style={{
-          maxHeight: contentHeight > 0 ? `${currentMaxHeight}px` : undefined,
+          clipPath: `inset(${clipAmount}% 0 ${clipAmount}% 0)`,
           opacity: eased,
-          overflow: "hidden",
-          willChange: "max-height, opacity",
+          transition: "clip-path 0.05s linear, opacity 0.05s linear",
+          willChange: "clip-path, opacity",
         }}
       >
-        <div ref={contentRef}>
-          <Link
-            href={ad.targetUrl || "#"}
-            target={ad.openInNewTab ? "_blank" : undefined}
-            rel={ad.openInNewTab ? "noopener noreferrer" : undefined}
-            className="group relative block overflow-hidden"
-          >
-            <img
-              src={ad.image}
-              alt={ad.title}
-              className="block w-full object-cover transition-transform duration-300 group-hover:scale-[1.01] group-active:scale-[0.99]"
-            />
-          </Link>
-        </div>
+        <Link
+          href={ad.targetUrl || "#"}
+          target={ad.openInNewTab ? "_blank" : undefined}
+          rel={ad.openInNewTab ? "noopener noreferrer" : undefined}
+          className="group relative block overflow-hidden"
+        >
+          <img
+            src={ad.image}
+            alt={ad.title}
+            className="block w-full object-cover"
+          />
+        </Link>
       </div>
     </div>
   );
