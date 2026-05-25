@@ -75,14 +75,14 @@ export default function ArticleInlineAdClient({ ad }: Props) {
   // Smoothstep easing for natural feel
   const eased = progress * progress * (3 - 2 * progress);
 
-  // clip-path reveals from center outward — no layout shift
-  const clipAmount = (1 - eased) * 50;
+  // clip-path reveals from top down, collapses from bottom up
+  const clipBottom = (1 - eased) * 100;
 
   return (
     <div ref={sentinelRef} className="my-6 -mx-3 sm:-mx-8 lg:-mx-10 md:hidden">
       <div
         style={{
-          clipPath: `inset(${clipAmount}% 0 ${clipAmount}% 0)`,
+          clipPath: `inset(0 0 ${clipBottom}% 0)`,
           opacity: eased,
           transition: "clip-path 0.05s linear, opacity 0.05s linear",
           willChange: "clip-path, opacity",
