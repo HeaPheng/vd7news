@@ -330,20 +330,17 @@ async function PostContent({ idSlug }: { idSlug: string }) {
               </div>
             </article>
 
-            {/* Related sections stream independently */}
-            <Suspense
-              fallback={
-                <div className="mt-8 h-40 skeleton-shimmer rounded-2xl" />
-              }
-            >
-              <PostRelatedSections
-                slug={post.slug}
-                currentPostId={post.id}
-              />
-            </Suspense>
           </main>
 
-          <aside className="hidden xl:block" />
+          {/* Related content streams independently into the main column and
+              the desktop real-estate sidebar. */}
+          <Suspense
+            fallback={
+              <div className="h-40 skeleton-shimmer rounded-2xl xl:col-start-2 xl:row-start-2" />
+            }
+          >
+            <PostRelatedSections currentPostId={post.id} />
+          </Suspense>
         </div>
       </div>
 

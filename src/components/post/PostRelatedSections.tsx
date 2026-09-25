@@ -122,8 +122,8 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
   if (!posts.length) return null;
 
   return (
-    <aside className="hidden xl:block">
-      <div className="sticky top-24 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+    <aside className="hidden xl:col-start-3 xl:row-start-1 xl:row-span-2 xl:block">
+      <div className="desktop-sidebar-scroll sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur hover:overflow-y-auto">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold uppercase tracking-wide text-red-400">
             អចលនទ្រព្យ
@@ -167,12 +167,10 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
 // ─── Main Server Component ────────────────────────────────────────────────────
 
 type PostRelatedSectionsProps = {
-  slug: string;
   currentPostId: number;
 };
 
 export default async function PostRelatedSections({
-  slug,
   currentPostId,
 }: PostRelatedSectionsProps) {
   let realEstatePosts: WPPost[] = [];
@@ -211,45 +209,48 @@ export default async function PostRelatedSections({
   }
 
   return (
-    <div className="mt-10 space-y-10">
-      <MobileRealEstateList posts={realEstatePosts} />
+    <>
+      <div className="min-w-0 space-y-10 xl:col-start-2 xl:row-start-2">
+        {/* Mobile/tablet order: real estate first and one card per row. */}
+        <MobileRealEstateList posts={realEstatePosts} />
 
-      {newestPosts.length > 0 && (
-        <div>
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">ព័ត៌មានក្តៅៗ</h2>
+        {newestPosts.length > 0 && (
+          <div>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">ព័ត៌មានក្តៅៗ</h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+              {newestPosts.map((item) => (
+                <PostCard key={item.id} post={item} />
+              ))}
+            </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-            {newestPosts.map((item) => (
-              <PostCard key={item.id} post={item} />
-            ))}
+        {internationalNewsPosts.length > 0 && (
+          <div>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">ព័ត៌មានអន្តរជាតិ</h2>
+
+              <Link
+                href="/category/international-news"
+                className="text-sm font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
+              >
+                ច្រើនទៀត
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+              {internationalNewsPosts.map((item) => (
+                <PostCard key={item.id} post={item} />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-
-      {internationalNewsPosts.length > 0 && (
-        <div>
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">ព័ត៌មានអន្តរជាតិ</h2>
-
-            <Link
-              href="/category/international-news"
-              className="text-sm font-medium text-red-400 transition-colors duration-200 hover:text-red-300 active:text-red-300"
-            >
-              ច្រើនទៀត
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-            {internationalNewsPosts.map((item) => (
-              <PostCard key={item.id} post={item} />
-            ))}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <DesktopRealEstateSidebar posts={realEstatePosts} />
-    </div>
+    </>
   );
 }
