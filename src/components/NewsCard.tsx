@@ -31,7 +31,7 @@ function renderMeta(date?: string, author?: string, small = false) {
       {date && (
         <>
           <FiClock className="text-gray-500" />
-          <span>
+          <span suppressHydrationWarning>
             {getRelativeTimeKhmer(date)} — {formatDate(date)}
           </span>
         </>

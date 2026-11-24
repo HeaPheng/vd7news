@@ -56,7 +56,7 @@ function PostCard({ post }: { post: WPPost }) {
       <div className="p-3 lg:p-4">
         {renderTags(post, 2)}
 
-        <div className="mb-2 text-xs text-white/50">
+        <div className="mb-2 text-xs text-white/50" suppressHydrationWarning>
           {getRelativeTimeKhmer(post.date)} — {formatDate(post.date)}
         </div>
 
@@ -107,7 +107,7 @@ function MobileRealEstateList({ posts }: { posts: WPPost[] }) {
                 className="line-clamp-2 text-base font-semibold text-white/90 transition-colors duration-200 group-hover:text-red-400 group-active:text-red-400"
                 dangerouslySetInnerHTML={{ __html: item.title.rendered }}
               />
-              <p className="mt-2 text-xs text-white/50">
+              <p className="mt-2 text-xs text-white/50" suppressHydrationWarning>
                 {getRelativeTimeKhmer(item.date)} — {formatDate(item.date)}
               </p>
             </div>
@@ -152,7 +152,7 @@ function DesktopRealEstateSidebar({ posts }: { posts: WPPost[] }) {
                   className="line-clamp-2 text-sm font-semibold text-white/90 transition-colors duration-200 group-hover:text-red-400 group-active:text-red-400"
                   dangerouslySetInnerHTML={{ __html: item.title.rendered }}
                 />
-                <p className="mt-2 text-xs text-white/50">
+                <p className="mt-2 text-xs text-white/50" suppressHydrationWarning>
                   {getRelativeTimeKhmer(item.date)} — {formatDate(item.date)}
                 </p>
               </div>

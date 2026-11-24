@@ -258,7 +258,7 @@ async function PostContent({ idSlug }: { idSlug: string }) {
                 />
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/60 sm:text-sm">
-                  <span>
+                  <span suppressHydrationWarning>
                     {getRelativeTimeKhmer(post.date)} —{" "}
                     {formatDate(post.date)}
                   </span>
